@@ -78,10 +78,44 @@ class XrayVpnService:VpnService(){
   if(!wanted){finish(null);return};stage="ESTABLISH";tun=requireNotNull(b.establish());stage="ENGINE";engine=XrayTunnelEngine(this,this).also{it.start(config,tun!!,bootstrap,mtu)}
   if(!wanted){finish(null);return};snapshot=snapshot.copy(phase=VpnPhase.UP,effectiveMtu=mtu,effectiveDns=dns);rates.reset();publish();notifyNow();timer=worker.scheduleWithFixedDelay({sample()},0,options.statsIntervalMillis.toLong(),TimeUnit.MILLISECONDS)
  }catch(_:Exception){android.util.Log.e("GraphiteXray","XRAY_START_FAILED stage=$stage");finish(VpnFailure.START)}catch(_:LinkageError){android.util.Log.e("GraphiteXray","XRAY_NATIVE_LOAD_FAILED stage=$stage");finish(VpnFailure.START)}}
- private fun sample(){if(!wanted)return;try{check(engine?.isRunning==true)
-  if(NotificationTraffic.needsSampling(options,uiVisible)){val st=engine!!.stats;val at=System.nanoTime();val rate=rates.sample(st.rxBytes,st.txBytes,at);snapshot=snapshot.copy(rxBytes=st.rxBytes,txBytes=st.txBytes,rxBytesPerSecond=rate.first,txBytesPerSecond=rate.second,sampledElapsedNanos=at,statisticsPaused=false)}else{rates.reset();snapshot=snapshot.copy(rxBytesPerSecond=null,txBytesPerSecond=null,statisticsPaused=true)}
-  publish();if(options.notificationSpeed && SystemClock.elapsedRealtime()-lastNotification>=2000)notifyNow()
- }catch(_:Exception){finish(VpnFailure.STATS)}}
+ private fun sample() {
+  if (!wanted) return
+  val runningEngine = engine
+  val running = try {
+   runningEngine?.isRunning == true
+  } catch (_: Exception) {
+   false
+  } catch (_: LinkageError) {
+   false
+  }
+  if (!running || runningEngine == null) {
+   finish(VpnFailure.START)
+   return
+  }
+
+  val stats = if (NotificationTraffic.needsSampling(options, uiVisible)) {
+   try {
+    runningEngine.stats
+   } catch (_: Exception) {
+    null
+   } catch (_: LinkageError) {
+    null
+   }
+  } else null
+  if (stats == null) {
+   rates.reset()
+   snapshot = snapshot.copy(rxBytesPerSecond=null, txBytesPerSecond=null,
+       sampledElapsedNanos=null, statisticsPaused=true)
+  } else {
+   val at = System.nanoTime()
+   val rate = rates.sample(stats.rxBytes, stats.txBytes, at)
+   snapshot = snapshot.copy(rxBytes=stats.rxBytes, txBytes=stats.txBytes,
+       rxBytesPerSecond=rate.first, txBytesPerSecond=rate.second,
+       sampledElapsedNanos=at, statisticsPaused=false)
+  }
+  publish()
+  if (options.notificationSpeed && SystemClock.elapsedRealtime() - lastNotification >= 2000) notifyNow()
+ }
  private fun publish(){snapshot=snapshot.copy(alwaysOn=if(Build.VERSION.SDK_INT>=29)runCatching{isAlwaysOn}.getOrNull()else null,lockdown=if(Build.VERSION.SDK_INT>=29)runCatching{isLockdownEnabled}.getOrNull()else null);val encoded=XrayMessages.encode(snapshot);listeners.toList().forEach{c->try{c.send(Message.obtain(null,XrayMessages.STATE).apply{data=encoded})}catch(_:RemoteException){listeners-=c}};if(listeners.isEmpty())uiVisible=false}
  private fun cleanup(){timer?.cancel(false);timer=null;try{engine?.stop()}finally{engine=null;runCatching{graphiteBridge?.close()};graphiteBridge=null;runCatching{tun?.close()};tun=null}}
  private fun finish(failure:VpnFailure?){wanted=false;var error=failure;try{cleanup()}catch(_:Exception){error=VpnFailure.STOP};snapshot=VpnSnapshot(phase=if(error==null)VpnPhase.DOWN else VpnPhase.ERROR,profileId=if(error==null)null else snapshot.profileId,error=error,failureStage=if(error==null)null else VpnStage.TUNNEL_START,diagnostic=if(error==null)null else VpnDiagnostic.UNABLE_TO_START_VPN);stopForeground(STOP_FOREGROUND_REMOVE);stopSelf();publish()}

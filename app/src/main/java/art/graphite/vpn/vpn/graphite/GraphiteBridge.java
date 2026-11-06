@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Set;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.net.ssl.*;
 
 /** Authenticated local SOCKS5 bridge for the versioned Graphite TLS tunnel. */
@@ -15,6 +16,7 @@ public final class GraphiteBridge implements Closeable {
     public interface SocketProtector { boolean protect(Socket socket); }
 
     private static final int CHUNK = 16384;
+    private static final long IDLE_MILLIS = 180_000;
     private final SSLSocketFactory tls;
     private final InetSocketAddress server;
     private final String hostname;
@@ -24,6 +26,7 @@ public final class GraphiteBridge implements Closeable {
     private final Set<Socket> sockets = ConcurrentHashMap.newKeySet();
     private final Semaphore slots = new Semaphore(48);
     private final ExecutorService workers = Executors.newCachedThreadPool();
+    private final ScheduledThreadPoolExecutor idleChecks = new ScheduledThreadPoolExecutor(1);
     private ServerSocket listener;
     private volatile boolean closed;
 
@@ -34,6 +37,7 @@ public final class GraphiteBridge implements Closeable {
         this.hostname = hostname;
         this.token = token.clone();
         this.protector = protector;
+        idleChecks.setRemoveOnCancelPolicy(true);
     }
 
     private static byte[] randomCredential() {
@@ -82,6 +86,7 @@ public final class GraphiteBridge implements Closeable {
             parameters.setEndpointIdentificationAlgorithm("HTTPS");
             parameters.setProtocols(new String[]{"TLSv1.3"});
             secure.setSSLParameters(parameters);
+            secure.setSoTimeout(8000);
             secure.startHandshake();
             DataOutputStream out = new DataOutputStream(secure.getOutputStream());
             out.writeBytes("GTP1");
@@ -96,7 +101,6 @@ public final class GraphiteBridge implements Closeable {
             }
             out.flush();
             if (secure.getInputStream().read() != 0) throw new IOException("Graphite relay rejected request");
-            secure.setSoTimeout(180_000);
             if (operation == 1) sockets.add(secure);
             if (closed) throw new IOException("Bridge stopped");
             return secure;
@@ -136,31 +140,45 @@ public final class GraphiteBridge implements Closeable {
             try { upstream = open(1, host, port); }
             catch (IOException failure) { reply(out, 5); return; }
             reply(out, 0);
-            local.setSoTimeout(180_000);
+            local.setSoTimeout(0);
+            upstream.setSoTimeout(0);
             SSLSocket remote = upstream;
-            Future<?> upload = workers.submit(() -> {
-                try {
-                    DataOutputStream frames = new DataOutputStream(remote.getOutputStream());
-                    byte[] buffer = new byte[CHUNK];
-                    for (int length; (length = in.read(buffer)) >= 0;) {
-                        frames.writeShort(length);
-                        frames.write(buffer, 0, length);
-                        frames.flush();
-                    }
-                    frames.writeShort(0);
-                    frames.flush();
-                } catch (IOException failure) { closeQuietly(remote); }
-            });
-            try {
-                DataInputStream frames = new DataInputStream(remote.getInputStream());
-                for (int length; (length = frames.readUnsignedShort()) != 0;) {
-                    if (length > CHUNK) throw new IOException("Frame too large");
-                    out.write(field(frames, length));
+            AtomicLong lastActivity = new AtomicLong(System.nanoTime());
+            long idleNanos = TimeUnit.MILLISECONDS.toNanos(IDLE_MILLIS);
+            long interval = Math.max(1, Math.min(1000, IDLE_MILLIS / 4));
+            ScheduledFuture<?> idleCheck = idleChecks.scheduleWithFixedDelay(() -> {
+                if (System.nanoTime() - lastActivity.get() >= idleNanos) {
+                    closeQuietly(local);
+                    closeQuietly(remote);
                 }
-                local.shutdownOutput();
-                upload.get(180, TimeUnit.SECONDS);
-            } finally { upload.cancel(true); }
-        } catch (IOException | ExecutionException | TimeoutException | RejectedExecutionException ignored) {
+            }, interval, interval, TimeUnit.MILLISECONDS);
+            try {
+                Future<?> upload = workers.submit(() -> {
+                    try {
+                        DataOutputStream frames = new DataOutputStream(remote.getOutputStream());
+                        byte[] buffer = new byte[CHUNK];
+                        for (int length; (length = in.read(buffer)) >= 0;) {
+                            frames.writeShort(length);
+                            frames.write(buffer, 0, length);
+                            frames.flush();
+                            lastActivity.set(System.nanoTime());
+                        }
+                        frames.writeShort(0);
+                        frames.flush();
+                    } catch (IOException failure) { closeQuietly(remote); }
+                });
+                try {
+                    DataInputStream frames = new DataInputStream(remote.getInputStream());
+                    for (int length; (length = frames.readUnsignedShort()) != 0;) {
+                        if (length > CHUNK) throw new IOException("Frame too large");
+                        out.write(field(frames, length));
+                        lastActivity.set(System.nanoTime());
+                    }
+                    local.shutdownOutput();
+                    upload.get();
+                } finally { upload.cancel(true); }
+            } finally { idleCheck.cancel(false); }
+        } catch (IOException | ExecutionException | RejectedExecutionException ignored) {
         } catch (InterruptedException interrupted) {
             Thread.currentThread().interrupt();
         } finally {
@@ -186,6 +204,7 @@ public final class GraphiteBridge implements Closeable {
     @Override public void close() {
         closed = true;
         closeQuietly(listener);
+        idleChecks.shutdownNow();
         workers.shutdownNow();
         for (Socket socket : sockets) closeQuietly(socket);
         Arrays.fill(token, (byte) 0);
