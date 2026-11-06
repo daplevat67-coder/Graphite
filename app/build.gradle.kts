@@ -25,13 +25,14 @@ val verifyStableSigning = tasks.register("verifyStableSigning") {
 }
 android {
     namespace = "art.graphite.vpn"
+    sourceSets.getByName("main").assets.srcDir(rootProject.file("graphite-server"))
     compileSdk = 35
     defaultConfig {
         applicationId = "art.graphite.vpn"
         minSdk = 26
         targetSdk = 35
-        versionCode = 17
-        versionName = "0.3.1-alpha1"
+        versionCode = 19
+        versionName = "0.3.3-alpha1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs.getByName("debug") {
@@ -41,13 +42,17 @@ android {
         keyPassword = signingValues.getProperty("keyPassword", "")
         storeType = "PKCS12"
     }
-    packaging { jniLibs.useLegacyPackaging = true }
+    packaging {
+        jniLibs.useLegacyPackaging = true
+        resources.excludes.add("META-INF/versions/9/OSGI-INF/MANIFEST.MF")
+    }
     buildFeatures { compose = true }
     testOptions { unitTests.isIncludeAndroidResources = true }
     compileOptions { isCoreLibraryDesugaringEnabled = true; sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = "17" }
 }
 dependencies {
+    implementation("com.github.mwiede:jsch:2.28.8")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     implementation(project(":awg-tunnel"))
     implementation(project(":xray-tunnel"))

@@ -32,7 +32,7 @@ internal fun readProfileClipboard(context: Context): String? {
 }
 
 @Composable internal fun ProfileImportScreen(initialText:String?,onSeedConsumed:()->Unit,
-    onFile:(()->Unit)?=null,onWireGuard:(()->Unit)?=null,onVless:(()->Unit)?=null,onImport:suspend(String,ByteArray)->Boolean) {
+    onFile:(()->Unit)?=null,onWireGuard:(()->Unit)?=null,onVless:(()->Unit)?=null,onSelfHosted:(()->Unit)?=null,onImport:suspend(String,ByteArray)->Boolean) {
     val context=LocalContext.current;val scope=rememberCoroutineScope()
     var text by remember{mutableStateOf(initialText ?: "")}
     var name by remember{mutableStateOf(context.getString(R.string.import_name_default))}
@@ -63,6 +63,11 @@ internal fun readProfileClipboard(context: Context): String? {
         }
     }
     SketchCard {
+        onSelfHosted?.let { start ->
+            OutlinedButton(onClick = start, enabled = !running, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.selfhost_title))
+            }
+        }
         onVless?.let { OutlinedButton(onClick=it,enabled=!running,modifier=Modifier.fillMaxWidth()){
             Text(stringResource(R.string.vless_create))
         } }

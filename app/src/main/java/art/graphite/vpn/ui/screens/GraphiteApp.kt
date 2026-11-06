@@ -217,7 +217,7 @@ import art.graphite.vpn.ui.theme.GraphiteTheme
         }
     }
     fun navigate(destination:Destination) {leaveEditor {direction=if(destination.ordinal>=tab.ordinal)1 else -1;editorOpen=false;profilesOpen=false;detail=null;returnToProtocol=null;tab=destination;if(tactile)haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)}}
-    fun back() {leaveEditor {direction=-1;when {editorOpen->editorOpen=false;profilesOpen->profilesOpen=false;detail!=null->{detail=returnToProtocol;returnToProtocol=null};else->tab=Destination.HOME}}}
+    fun back() {leaveEditor {direction=-1;when {editorOpen->editorOpen=false;profilesOpen->profilesOpen=false;detail=="self-hosted"->detail="import";detail!=null->{detail=returnToProtocol;returnToProtocol=null};else->tab=Destination.HOME}}}
     BackHandler(editorOpen || profilesOpen || detail!=null || tab!=Destination.HOME){back()}
     LaunchedEffect(incomingImport,locked,busy,editorOpen) {
         if(incomingImport!=null) {
@@ -409,7 +409,7 @@ import art.graphite.vpn.ui.theme.GraphiteTheme
         val colors=MaterialTheme.colorScheme
         Surface(color=colors.background) {
             Column(Modifier.fillMaxSize().paper(colors.onSurface,colors.background).windowInsetsPadding(WindowInsets.safeDrawing)) {
-                val heading=when {editorOpen->R.string.advanced_mode;profilesOpen->R.string.profiles;detail=="tunneling"->R.string.tunneling_screen;detail=="import"->R.string.connection_create;detail?.startsWith("server:")==true->R.string.server_details;detail!=null->R.string.protocol;tab==Destination.HOME->R.string.vpn_title;else->tab.label}
+                val heading=when {editorOpen->R.string.advanced_mode;profilesOpen->R.string.profiles;detail=="tunneling"->R.string.tunneling_screen;detail=="import"->R.string.connection_create;detail=="self-hosted"->R.string.selfhost_title;detail?.startsWith("server:")==true->R.string.server_details;detail!=null->R.string.protocol;tab==Destination.HOME->R.string.vpn_title;else->tab.label}
                 Row(Modifier.fillMaxWidth().padding(horizontal=20.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
                     if(editorOpen || profilesOpen || detail!=null)IconAction("back",R.string.back){back()}else SketchIcon(if(tab==Destination.HOME)"shield" else tab.icon,Modifier.size(30.dp))
                     Text(stringResource(heading),Modifier.weight(1f),style=MaterialTheme.typography.titleLarge)
@@ -485,6 +485,15 @@ import art.graphite.vpn.ui.theme.GraphiteTheme
                                 onDetails={profilesOpen=false;returnToProtocol=protocolId;if(protocolId==null)tab=Destination.SERVERS;detail="server:$it";direction=1},activeProfileId=tunnel.profileId,tunnelPhase=tunnel.phase,alwaysOn=tunnel.alwaysOn==true,drawLoading=drawing && animate,protocol=pageProtocol)
                             }
                             page=="detail/tunneling"->TunnelPreferences(tunnelOptions,onSave={tunnelOptionsStore.save(it);tunnelOptions=it})
+                            page=="detail/self-hosted"->SelfHostedScreen { profile ->
+                                if (detail == "self-hosted") {
+                                    importSeed = profile
+                                    importSession++
+                                    returnToProtocol = "graphite"
+                                    detail = "import"
+                                    direction = -1
+                                }
+                            }
                             page=="detail/import"->key(importSession) {
                                 val protocolId=returnToProtocol
                                 ProfileImportScreen(importSeed,onSeedConsumed={importSeed=null},
@@ -497,6 +506,9 @@ import art.graphite.vpn.ui.theme.GraphiteTheme
                                     } else null,
                                     onVless=if(protocolId==null || protocolId=="vless") {
                                         {openEditor(null,"vless")}
+                                    } else null,
+                                    onSelfHosted=if(protocolId==null || protocolId=="graphite") {
+                                        {detail="self-hosted";direction=1}
                                     } else null,
                                     onImport={name,raw->
                                         if(busy)false else {

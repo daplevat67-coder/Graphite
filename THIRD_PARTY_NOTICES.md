@@ -9,3 +9,5 @@ ZXing Android Embedded 4.3.0 — JourneyApps, Apache-2.0, https://github.com/jou
 
 
 Xray integration: official XTLS/libXray v26.10.31, MIT; embedded Xray-core, MPL-2.0; heiher/hev-socks5-tunnel v2.19.3, MIT. Exact upstream source archives, release hashes, Java facade integration and reproducible fetch scripts are included in xray-tunnel/. All 51 transitive Go license notices and complete license texts are bundled under xray-tunnel/src/main/assets/licenses/ and included in the APK. See xray-tunnel/UPSTREAM.md and its license inventory for per-module authors, versions and licenses.
+
+JSch 2.28.8 (mwiede fork) provides the SSH transport for Self-hosted setup. License and bundled notices are in app/src/main/assets/licenses/JSch-LICENSE*.txt. Upstream: https://github.com/mwiede/jsch.
