@@ -60,16 +60,16 @@ class XrayVpnService:VpnService(){
    require(Build.VERSION.SDK_INT>=29)
    val network=requireNotNull(physicalNetwork)
    val peer=store.graphiteProfile(profile.id)
-   val address=network.getAllByName(peer.host).first()
+   val addresses=network.getAllByName(peer.host).distinct().map { InetSocketAddress(it,peer.port) }
    val token=peer.token()
    val bridge=try {
     GraphiteBridge(SSLSocketFactory.getDefault() as SSLSocketFactory,
-        InetSocketAddress(address,peer.port),peer.host,token) { socket ->
+        addresses,peer.host,token) { socket ->
      protect(socket) && runCatching { network.bindSocket(socket); true }.getOrDefault(false)
     }
    } finally { token.fill(0) }
    graphiteBridge=bridge
-   val localPort=bridge.start()
+   val localPort=bridge.start(options.serviceStartTimeoutSeconds * 1000L)
    XrayConfigGenerator.graphiteBridge(localPort,bridge.username(),bridge.password(),dns)
   } else store.xrayConfig(profile.id,dnsServers=dns)
   stage="BUILDER";val b=Builder().setSession("GRAPHITE · ${profile.protocolName}").setMtu(mtu).addAddress("10.111.0.2",32).addAddress("fd42:6767::2",128).addRoute("0.0.0.0",0).addRoute("::",0)

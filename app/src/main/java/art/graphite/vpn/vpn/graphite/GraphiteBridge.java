@@ -7,6 +7,7 @@ import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Set;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.net.ssl.*;
@@ -18,7 +19,8 @@ public final class GraphiteBridge implements Closeable {
     private static final int CHUNK = 16384;
     private static final long IDLE_MILLIS = 180_000;
     private final SSLSocketFactory tls;
-    private final InetSocketAddress server;
+    private final List<InetSocketAddress> servers;
+    private InetSocketAddress server;
     private final String hostname;
     private final byte[] token;
     private final SocketProtector protector;
@@ -32,8 +34,14 @@ public final class GraphiteBridge implements Closeable {
 
     public GraphiteBridge(SSLSocketFactory tls, InetSocketAddress server, String hostname,
                           byte[] token, SocketProtector protector) {
+        this(tls, java.util.Collections.singletonList(server), hostname, token, protector);
+    }
+
+    public GraphiteBridge(SSLSocketFactory tls, List<InetSocketAddress> servers, String hostname,
+                          byte[] token, SocketProtector protector) {
+        if (servers.isEmpty()) throw new IllegalArgumentException("No Graphite server addresses");
         this.tls = tls;
-        this.server = server;
+        this.servers = new java.util.ArrayList<>(servers);
         this.hostname = hostname;
         this.token = token.clone();
         this.protector = protector;
@@ -50,8 +58,27 @@ public final class GraphiteBridge implements Closeable {
     public String password() { return new String(localPassword, StandardCharsets.US_ASCII); }
 
     public int start() throws IOException {
-        // Verify TLS identity and credentials before a VPN interface takes over routing.
-        try (SSLSocket probe = open(0, "", 0)) { }
+        return start(30_000);
+    }
+
+    public int start(long timeoutMillis) throws IOException {
+        // Share the startup budget across the resolved addresses.
+        long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMillis);
+        IOException failure = new SocketTimeoutException("Graphite startup timed out");
+        boolean verified = false;
+        for (int i = 0; i < servers.size() && !closed; i++) {
+            long remaining = deadline - System.nanoTime();
+            if (remaining <= 0) break;
+            long attempt = remaining / (servers.size() - i);
+            server = servers.get(i);
+            try (SSLSocket probe = open(0, "", 0, System.nanoTime() + attempt)) {
+                verified = true;
+                break;
+            } catch (IOException unavailable) {
+                failure = unavailable;
+            }
+        }
+        if (!verified) throw failure;
         listener = new ServerSocket(0, 32, InetAddress.getByName("127.0.0.1"));
         workers.execute(this::accept);
         return listener.getLocalPort();
@@ -73,20 +100,26 @@ public final class GraphiteBridge implements Closeable {
         }
     }
 
-    private SSLSocket open(int operation, String destination, int port) throws IOException {
+    private static int timeout(long deadline, int cap) throws SocketTimeoutException {
+        long remaining = deadline - System.nanoTime();
+        if (remaining <= 0) throw new SocketTimeoutException("Graphite startup timed out");
+        return (int) Math.max(1, Math.min(cap, TimeUnit.NANOSECONDS.toMillis(remaining)));
+    }
+
+    private SSLSocket open(int operation, String destination, int port, long deadline) throws IOException {
         Socket plain = new Socket();
         sockets.add(plain);
         SSLSocket secure = null;
         try {
             if (closed || !protector.protect(plain)) throw new IOException("Socket protection failed");
-            plain.connect(server, 5000);
-            plain.setSoTimeout(8000);
+            plain.connect(server, timeout(deadline, 5000));
+            plain.setSoTimeout(timeout(deadline, 8000));
             secure = (SSLSocket) tls.createSocket(plain, hostname, server.getPort(), true);
             SSLParameters parameters = secure.getSSLParameters();
             parameters.setEndpointIdentificationAlgorithm("HTTPS");
             parameters.setProtocols(new String[]{"TLSv1.3"});
             secure.setSSLParameters(parameters);
-            secure.setSoTimeout(8000);
+            secure.setSoTimeout(timeout(deadline, 8000));
             secure.startHandshake();
             DataOutputStream out = new DataOutputStream(secure.getOutputStream());
             out.writeBytes("GTP1");
@@ -100,6 +133,7 @@ public final class GraphiteBridge implements Closeable {
                 out.write(host);
             }
             out.flush();
+            secure.setSoTimeout(timeout(deadline, 8000));
             if (secure.getInputStream().read() != 0) throw new IOException("Graphite relay rejected request");
             if (operation == 1) sockets.add(secure);
             if (closed) throw new IOException("Bridge stopped");
@@ -137,7 +171,7 @@ public final class GraphiteBridge implements Closeable {
             else { reply(out, 8); return; }
             int port = in.readUnsignedShort();
             if (port == 0 || !host.matches("[A-Za-z0-9.:-]{1,253}")) { reply(out, 4); return; }
-            try { upstream = open(1, host, port); }
+            try { upstream = open(1, host, port, System.nanoTime() + TimeUnit.SECONDS.toNanos(21)); }
             catch (IOException failure) { reply(out, 5); return; }
             reply(out, 0);
             local.setSoTimeout(0);

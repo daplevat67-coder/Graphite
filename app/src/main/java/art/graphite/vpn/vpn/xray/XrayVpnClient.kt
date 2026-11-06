@@ -10,7 +10,7 @@ object XrayVpnClient {
  private val main=Handler(Looper.getMainLooper())
  private var app:Context?=null
  private var callback:((VpnSnapshot)->Unit)?=null
- private var pendingProfile:String?=null
+ private var pendingStart:Intent?=null
  private var remote:Messenger?=null
  private var receiver:Messenger?=null
  private var connection:ServiceConnection?=null
@@ -29,25 +29,31 @@ object XrayVpnClient {
  }
  fun start(context:Context,id:String,listener:(VpnSnapshot)->Unit)=onMain {
   app=context.applicationContext;callback=listener
-  val token=++epoch;lastPhase=VpnPhase.STARTING;pendingProfile=id
+  val intent = try { XraySettings.startIntent(context, id) } catch (_: Exception) {
+   fail(VpnStage.SERVICE_START,VpnDiagnostic.SERVICE_START_REJECTED,id)
+   return@onMain
+  }
+  val timeout = requireNotNull(intent.getBundleExtra(XraySettings.EXTRA))
+      .getInt("serviceStartTimeoutSeconds") * 1000L
+  val token=++epoch;lastPhase=VpnPhase.STARTING;pendingStart=intent
   main.postDelayed({
    if(token==epoch && lastPhase==VpnPhase.STARTING){
     if(remote!=null)send(XrayMessages.DISCONNECT)
     fail(VpnStage.SERVICE_START,VpnDiagnostic.SERVICE_READY_TIMEOUT,id)
    }
-  },30000)
+  },timeout)
   // Cold ART/application initialization finishes before the foreground deadline.
   if(remote!=null)launchPending()else if(!bound)bind(true)
   if(!bound)fail(VpnStage.SERVICE_START,VpnDiagnostic.SERVICE_START_REJECTED,id)
  }
  fun stop()=onMain {
-  if(pendingProfile!=null && remote==null){detach();callback?.invoke(VpnSnapshot(phase=VpnPhase.DOWN))}
+  if(pendingStart!=null && remote==null){detach();callback?.invoke(VpnSnapshot(phase=VpnPhase.DOWN))}
   else if(remote!=null)send(XrayMessages.DISCONNECT)
  }
  fun refresh()=onMain{send(XrayMessages.QUERY)}
  fun setVisible(value:Boolean)=onMain{visible=value;send(XrayMessages.VISIBLE,Bundle().apply{putBoolean("visible",value)})}
  fun detach()=onMain {
-  ++epoch;++bindingEpoch;pendingProfile=null
+  ++epoch;++bindingEpoch;pendingStart=null
   val old=connection;connection=null
   if(bound && old!=null)runCatching{app?.unbindService(old)}
   bound=false;remote=null;receiver=null
@@ -57,8 +63,9 @@ object XrayVpnClient {
   callback?.invoke(VpnSnapshot(phase=VpnPhase.ERROR,profileId=id,error=VpnFailure.START,failureStage=stage,diagnostic=diagnostic))
  }
  private fun launchPending(){
-  val id=pendingProfile ?: return;pendingProfile=null
-  try{val c=app ?: return;c.startForegroundService(XraySettings.startIntent(c,id))}
+  val intent=pendingStart ?: return;pendingStart=null
+  val id=intent.getStringExtra("profile")
+  try{val c=app ?: return;c.startForegroundService(intent)}
   catch(_:Exception){fail(VpnStage.SERVICE_START,VpnDiagnostic.SERVICE_START_REJECTED,id)}
  }
  private fun bind(create:Boolean){

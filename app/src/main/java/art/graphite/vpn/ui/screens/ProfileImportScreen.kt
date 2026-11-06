@@ -3,7 +3,6 @@ package art.graphite.vpn.ui.screens
 import android.app.Activity
 import android.content.ClipboardManager
 import android.content.Context
-import android.view.WindowManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -42,12 +41,7 @@ internal fun readProfileClipboard(context: Context): String? {
     var error by remember{mutableStateOf<Int?>(null)}
     fun replace(next:ImportPayload?) {(payload as? ImportPayload.ConfigPayload)?.config?.fill(0);payload=next}
     fun read(value:String) {replace(null);text=value.take(262144);error=null}
-    DisposableEffect(Unit) {
-        val window=(context as? Activity)?.window
-        val secure=window?.attributes?.flags?.and(WindowManager.LayoutParams.FLAG_SECURE)!=0
-        window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        onDispose {(payload as? ImportPayload.ConfigPayload)?.config?.fill(0);if(!secure)window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)}
-    }
+    SecureWindow { (payload as? ImportPayload.ConfigPayload)?.config?.fill(0) }
     LaunchedEffect(Unit){onSeedConsumed()}
     val scanner=rememberLauncherForActivityResult(ScanContract()){result->result.contents?.let(::read)}
     val gallery=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->

@@ -1,6 +1,4 @@
 package art.graphite.vpn.ui.screens
-import android.app.Activity
-import android.view.WindowManager
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -19,7 +17,7 @@ import kotlinx.coroutines.withContext
  if(!xray || id==null){AdvancedEditor(id,onSaved,onCancel,onDirtyChanged);return}
  val context=LocalContext.current;val scope=rememberCoroutineScope();val store=remember{ProfileStore(context)}
  var name by remember{mutableStateOf("")};var link by remember{mutableStateOf("")};var loaded by remember{mutableStateOf(false)};var saving by remember{mutableStateOf(false)};var failure by remember{mutableStateOf(false)}
- DisposableEffect(Unit){val window=(context as? Activity)?.window;val secure=window?.attributes?.flags?.and(WindowManager.LayoutParams.FLAG_SECURE)!=0;window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE);onDispose{link="";if(!secure)window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)}}
+ SecureWindow { link = "" }
  LaunchedEffect(id){try{val result=withContext(Dispatchers.IO){val p=store.profile(id);val raw=store.export(id);try{p.name to raw.toString(Charsets.UTF_8)}finally{raw.fill(0)}};name=result.first;link=result.second;loaded=true}catch(_:Exception){failure=true}}
  Text(stringResource(R.string.xray_edit_title),style=MaterialTheme.typography.titleMedium);Text(stringResource(R.string.xray_edit_hint))
  OutlinedTextField(name,{name=it;onDirtyChanged(true)},label={Text(stringResource(R.string.import_profile_name))},enabled=loaded && !saving,modifier=Modifier.fillMaxWidth())

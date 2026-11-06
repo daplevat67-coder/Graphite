@@ -1,10 +1,8 @@
 package art.graphite.vpn.ui.screens
 
-import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.os.PersistableBundle
-import android.view.WindowManager
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Checkbox
@@ -48,12 +46,7 @@ internal fun ConnectionFormats(profile: StoredProfile, store: ProfileStore) {
 @Composable
 private fun ConnectionFormatValues(profile: StoredProfile, store: ProfileStore) {
     val context = LocalContext.current
-    DisposableEffect(context) {
-        val window = (context as? Activity)?.window
-        val wasSecure = window?.attributes?.flags?.and(WindowManager.LayoutParams.FLAG_SECURE) != 0
-        window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        onDispose { if (!wasSecure) window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE) }
-    }
+    SecureWindow()
 
     var formats by remember(profile.id) { mutableStateOf<Map<Int, String>?>(null) }
     var failure by remember(profile.id) { mutableStateOf(false) }
