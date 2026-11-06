@@ -1,0 +1,7 @@
+<resources>
+    <string name="notification_stats_disabled">Туннель включён · статистика отключена</string>
+    <string name="notification_stats_unavailable">Туннель включён · статистика недоступна</string>
+    <string name="notification_speed_pending">Туннель включён · ожидается измерение скорости</string>
+    <string name="notification_speed">Скорость в уведомлении</string>
+    <string name="notification_speed_hint">Загрузка и выгрузка в Мбит/с, обновление не чаще раза в 2 с. Для показаний нужен сбор статистики; при включении опрос работает и в фоне.</string>
+</resources>

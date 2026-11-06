@@ -1,0 +1,309 @@
+[
+  {
+    "module": "github.com/andybalholm/brotli",
+    "version": "v1.2.7",
+    "licenses": "github.com_andybalholm_brotli-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/andybalholm/brotli/v1.2.7/LICENSE"
+  },
+  {
+    "module": "github.com/apernet/quic-go",
+    "version": "v0.63.1-0.20261004180939-a10df75c260c",
+    "licenses": "github.com_apernet_quic-go-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/apernet/quic-go/a10df75c260c/LICENSE"
+  },
+  {
+    "module": "github.com/ghodss/yaml",
+    "version": "v1.0.1-0.20220118164431-d8423dcdf344",
+    "licenses": "github.com_ghodss_yaml-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/ghodss/yaml/d8423dcdf344/LICENSE"
+  },
+  {
+    "module": "github.com/google/uuid",
+    "version": "v1.6.0",
+    "licenses": "github.com_google_uuid-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/google/uuid/v1.6.0/LICENSE"
+  },
+  {
+    "module": "github.com/gorilla/websocket",
+    "version": "v1.5.3",
+    "licenses": "github.com_gorilla_websocket-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/gorilla/websocket/v1.5.3/LICENSE"
+  },
+  {
+    "module": "github.com/huin/goupnp",
+    "version": "v1.3.0",
+    "licenses": "github.com_huin_goupnp-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/huin/goupnp/v1.3.0/LICENSE"
+  },
+  {
+    "module": "github.com/jackpal/go-nat-pmp",
+    "version": "v1.1.0",
+    "licenses": "github.com_jackpal_go-nat-pmp-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/jackpal/go-nat-pmp/v1.1.0/LICENSE"
+  },
+  {
+    "module": "github.com/juju/ratelimit",
+    "version": "v1.0.2",
+    "licenses": "github.com_juju_ratelimit-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/juju/ratelimit/v1.0.2/LICENSE"
+  },
+  {
+    "module": "github.com/klauspost/compress",
+    "version": "v1.20.3",
+    "licenses": "github.com_klauspost_compress-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/klauspost/compress/v1.20.3/LICENSE"
+  },
+  {
+    "module": "github.com/klauspost/cpuid/v2",
+    "version": "v2.4.1",
+    "licenses": "github.com_klauspost_cpuid_v2-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/klauspost/cpuid/v2.4.1/LICENSE"
+  },
+  {
+    "module": "github.com/koron/go-ssdp",
+    "version": "v0.9.1",
+    "licenses": "github.com_koron_go-ssdp-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/koron/go-ssdp/v0.9.1/LICENSE"
+  },
+  {
+    "module": "github.com/libp2p/go-nat",
+    "version": "v1.0.1-0.20250821073202-01afc089f138",
+    "licenses": "github.com_libp2p_go-nat-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/libp2p/go-nat/01afc089f138/LICENSE"
+  },
+  {
+    "module": "github.com/libp2p/go-netroute",
+    "version": "v0.4.0",
+    "licenses": "github.com_libp2p_go-netroute-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/libp2p/go-netroute/v0.4.0/LICENSE"
+  },
+  {
+    "module": "github.com/metacubex/age",
+    "version": "v0.0.0-20260603010618-28d156b4ea78",
+    "licenses": "github.com_metacubex_age-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/metacubex/age/28d156b4ea78/LICENSE"
+  },
+  {
+    "module": "github.com/metacubex/hkdf",
+    "version": "v0.1.0",
+    "licenses": "github.com_metacubex_hkdf-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/metacubex/hkdf/v0.1.0/LICENSE"
+  },
+  {
+    "module": "github.com/metacubex/hpke",
+    "version": "v0.1.0",
+    "licenses": "github.com_metacubex_hpke-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/metacubex/hpke/v0.1.0/LICENSE"
+  },
+  {
+    "module": "github.com/metacubex/mlkem",
+    "version": "v0.1.0",
+    "licenses": "github.com_metacubex_mlkem-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/metacubex/mlkem/v0.1.0/LICENSE"
+  },
+  {
+    "module": "github.com/miekg/dns",
+    "version": "v1.1.73",
+    "licenses": "github.com_miekg_dns-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/miekg/dns/v1.1.73/LICENSE"
+  },
+  {
+    "module": "github.com/pelletier/go-toml",
+    "version": "v1.9.5",
+    "licenses": "github.com_pelletier_go-toml-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/pelletier/go-toml/v1.9.5/LICENSE"
+  },
+  {
+    "module": "github.com/pion/dtls/v3",
+    "version": "v3.1.15",
+    "licenses": "github.com_pion_dtls_v3-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/pion/dtls/v3.1.15/LICENSE"
+  },
+  {
+    "module": "github.com/pion/logging",
+    "version": "v0.2.4",
+    "licenses": "github.com_pion_logging-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/pion/logging/v0.2.4/LICENSE"
+  },
+  {
+    "module": "github.com/pion/stun/v3",
+    "version": "v3.1.7",
+    "licenses": "github.com_pion_stun_v3-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/pion/stun/v3.1.7/LICENSE"
+  },
+  {
+    "module": "github.com/pion/transport/v4",
+    "version": "v4.1.3",
+    "licenses": "github.com_pion_transport_v4-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/pion/transport/v4.1.3/LICENSE"
+  },
+  {
+    "module": "github.com/pion/transport/v5",
+    "version": "v5.1.4",
+    "licenses": "github.com_pion_transport_v5-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/pion/transport/v5.1.4/LICENSE"
+  },
+  {
+    "module": "github.com/pires/go-proxyproto",
+    "version": "v0.16.0",
+    "licenses": "github.com_pires_go-proxyproto-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/pires/go-proxyproto/v0.16.0/LICENSE"
+  },
+  {
+    "module": "github.com/quic-go/qpack",
+    "version": "v0.6.0",
+    "licenses": "github.com_quic-go_qpack-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/quic-go/qpack/v0.6.0/LICENSE.md"
+  },
+  {
+    "module": "github.com/refraction-networking/utls",
+    "version": "v1.8.3-0.20260301010127-aa6edf4b11af",
+    "licenses": "github.com_refraction-networking_utls-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/refraction-networking/utls/aa6edf4b11af/LICENSE"
+  },
+  {
+    "module": "github.com/robfig/cron/v3",
+    "version": "v3.0.1",
+    "licenses": "github.com_robfig_cron_v3-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/robfig/cron/v3.0.1/LICENSE"
+  },
+  {
+    "module": "github.com/vishvananda/netlink",
+    "version": "v1.3.1",
+    "licenses": "github.com_vishvananda_netlink-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/vishvananda/netlink/v1.3.1/LICENSE"
+  },
+  {
+    "module": "github.com/vishvananda/netns",
+    "version": "v0.0.5",
+    "licenses": "github.com_vishvananda_netns-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/vishvananda/netns/v0.0.5/LICENSE"
+  },
+  {
+    "module": "github.com/wlynxg/anet",
+    "version": "v0.0.5",
+    "licenses": "github.com_wlynxg_anet-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/wlynxg/anet/v0.0.5/LICENSE"
+  },
+  {
+    "module": "github.com/xtls/libxray",
+    "version": "v0.0.0-00010101000000-000000000000",
+    "licenses": "libXray-LICENSE.txt",
+    "source": "https://github.com/XTLS/libXray/tree/v26.10.31",
+    "note": "Native binary local replacement; official archive pinned to v26.10.31."
+  },
+  {
+    "module": "github.com/xtls/reality",
+    "version": "v0.0.0-20261014101318-83f621788ca8",
+    "licenses": "github.com_xtls_reality-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/xtls/reality/83f621788ca8/LICENSE"
+  },
+  {
+    "module": "github.com/xtls/xray-core",
+    "version": "v1.260327.1-0.20261031132019-a4a3dff5b20c",
+    "licenses": "github.com_xtls_xray-core-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/xtls/xray-core/a4a3dff5b20c/LICENSE"
+  },
+  {
+    "module": "github.com/yuin/gopher-lua",
+    "version": "v1.1.2",
+    "licenses": "github.com_yuin_gopher-lua-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/yuin/gopher-lua/v1.1.2/LICENSE"
+  },
+  {
+    "module": "go4.org/netipx",
+    "version": "v0.0.0-20260823151212-3075585bcbeb",
+    "licenses": "go4.org_netipx-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/go4org/netipx/3075585bcbeb/LICENSE"
+  },
+  {
+    "module": "golang.org/x/crypto",
+    "version": "v0.58.0",
+    "licenses": "golang.org_x_crypto-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/golang/crypto/v0.58.0/LICENSE"
+  },
+  {
+    "module": "golang.org/x/crypto/x509roots/fallback",
+    "version": "v0.0.0-20261030153154-30a33513ff6d",
+    "licenses": "golang.org_x_crypto_x509roots_fallback-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/golang/crypto/30a33513ff6d/LICENSE"
+  },
+  {
+    "module": "golang.org/x/exp",
+    "version": "v0.0.0-20261014143641-f0251eb4aa3e",
+    "licenses": "golang.org_x_exp-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/golang/exp/f0251eb4aa3e/LICENSE"
+  },
+  {
+    "module": "golang.org/x/mobile",
+    "version": "v0.0.0-20261011034528-197770444867",
+    "licenses": "golang.org_x_mobile-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/golang/mobile/197770444867/LICENSE"
+  },
+  {
+    "module": "golang.org/x/net",
+    "version": "v0.62.0",
+    "licenses": "golang.org_x_net-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/golang/net/v0.62.0/LICENSE"
+  },
+  {
+    "module": "golang.org/x/sync",
+    "version": "v0.24.0",
+    "licenses": "golang.org_x_sync-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/golang/sync/v0.24.0/LICENSE"
+  },
+  {
+    "module": "golang.org/x/sys",
+    "version": "v0.49.0",
+    "licenses": "golang.org_x_sys-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/golang/sys/v0.49.0/LICENSE"
+  },
+  {
+    "module": "golang.org/x/text",
+    "version": "v0.43.0",
+    "licenses": "golang.org_x_text-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/golang/text/v0.43.0/LICENSE"
+  },
+  {
+    "module": "golang.zx2c4.com/wireguard",
+    "version": "v0.0.0-20261024220952-b3bc704ef0ee",
+    "licenses": "golang.zx2c4.com_wireguard-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/WireGuard/wireguard-go/b3bc704ef0ee/LICENSE"
+  },
+  {
+    "module": "google.golang.org/genproto/googleapis/rpc",
+    "version": "v0.0.0-20261026165753-2ffab32bce7e",
+    "licenses": "google.golang.org_genproto_googleapis_rpc-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/googleapis/go-genproto/2ffab32bce7e/LICENSE"
+  },
+  {
+    "module": "google.golang.org/grpc",
+    "version": "v1.85.0",
+    "licenses": "google.golang.org_grpc-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/grpc/grpc-go/v1.85.0/LICENSE"
+  },
+  {
+    "module": "google.golang.org/protobuf",
+    "version": "v1.36.12",
+    "licenses": "google.golang.org_protobuf-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/protocolbuffers/protobuf-go/v1.36.12/LICENSE"
+  },
+  {
+    "module": "gopkg.in/yaml.v2",
+    "version": "v2.4.0",
+    "licenses": "gopkg.in_yaml.v2-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/go-yaml/yaml/v2.4.0/LICENSE"
+  },
+  {
+    "module": "layeh.com/gopher-luar",
+    "version": "v1.0.11",
+    "licenses": "layeh.com_gopher-luar-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/layeh/gopher-luar/v1.0.11/LICENSE"
+  },
+  {
+    "module": "lukechampine.com/blake3",
+    "version": "v1.4.1",
+    "licenses": "lukechampine.com_blake3-LICENSES.txt",
+    "source": "https://raw.githubusercontent.com/lukechampine/blake3/v1.4.1/LICENSE"
+  }
+]

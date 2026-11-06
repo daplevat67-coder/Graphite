@@ -1,0 +1,37 @@
+<resources>
+    <string name="tunnel_options">Туннель · дополнительные настройки</string>
+    <string name="tunnel_options_hint">Включите нужные переопределения и сохраните. Выключенный переключатель оставляет значение из профиля. Параметры AWG сохраняются.</string>
+    <string name="override_mtu">Свой MTU</string>
+    <string name="override_mtu_hint">По умолчанию — из профиля, иначе 1280, как в официальном AWG. Больше не всегда быстрее.</string>
+    <string name="mtu_setting">MTU: %1$d байт</string>
+    <string name="override_dns">Свой DNS</string>
+    <string name="override_dns_hint">Заменяет DNS профиля при подключении. До четырёх числовых IPv4/IPv6; это обычный DNS, не DoH.</string>
+    <string name="custom_dns_addresses">Адреса DNS через запятую</string>
+    <string name="override_keepalive">Свой Keepalive</string>
+    <string name="override_keepalive_hint">WG/AWG: интервал для всех peers. 0 отключает; 25 с часто используют для NAT. Это не настройка скорости.</string>
+    <string name="keepalive_setting">Keepalive: %1$d с</string>
+    <string name="split_apps">Раздельное туннелирование приложений</string>
+    <string name="split_apps_hint">Заменяет список приложений профиля выбранными ниже. Нужен хотя бы один пакет.</string>
+    <string name="only_selected_apps">Только выбранные через VPN</string>
+    <string name="only_selected_apps_hint">Включено — VPN только для списка. Выключено — приложения из списка обходят VPN.</string>
+    <string name="app_packages">Имена пакетов через запятую</string>
+    <string name="apps_choose">Выбрать приложения</string>
+    <string name="apps_loading">Загрузка приложений…</string>
+    <string name="apps_empty">Нет доступных приложений с экраном запуска. Пакеты можно ввести вручную.</string>
+    <string name="app_split_lockdown_hint">Показываются приложения с экраном запуска. При системной блокировке без VPN исключённые приложения могут остаться без интернета.</string>
+    <string name="override_apply_hint">Применяется при следующем подключении, включая Always-on. Исходный профиль не переписывается. Для возврата к нему выключите переопределения и сохраните.</string>
+    <string name="options_unsaved">Есть несохранённые изменения</string>
+    <string name="options_saved">Сохранено. Переподключитесь для применения.</string>
+    <string name="options_invalid">Не удалось сохранить: проверьте MTU, DNS, Keepalive и непустой список пакетов.</string>
+    <string name="options_save">Сохранить настройки туннеля</string>
+    <string name="speed_megabits">Скорость в Мбит/с</string>
+    <string name="speed_megabits_hint">Выключено — КиБ/с. 1 Мбит/с = 125 000 байт/с. Единицы не меняют скорость подключения.</string>
+    <string name="live_statistics">Измерять трафик и handshake</string>
+    <string name="live_statistics_hint">Опрос счётчиков ядра VPN. Выключение уменьшает служебный опрос; показатели станут недоступны.</string>
+    <string name="background_statistics">Опрос статистики в фоне</string>
+    <string name="background_statistics_hint">При выключении опрос приостанавливается в фоне, если также отключена скорость в уведомлении. Туннель продолжает работать.</string>
+    <string name="stats_no_handshake">Статистика отключена. Наличие handshake не проверяется.</string>
+    <string name="effective_mtu">MTU активного подключения: %1$d байт</string>
+    <string name="always_on_switch">Постоянная VPN</string>
+    <string name="system_switch_hint">Изменение откроет настройки Android. Положение отражает подтверждённый статус службы; если статус неизвестен, смотрите подпись ниже.</string>
+</resources>

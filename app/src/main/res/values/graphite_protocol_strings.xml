@@ -1,0 +1,5 @@
+<resources>
+    <string name="graphite_experimental">Экспериментальный протокол</string>
+    <string name="graphite_description">Graphite Tunnel 1 работает на Android 10 и новее. Для подключения нужен собственный сервер с TLS-сертификатом и ссылка graphite://. Поддерживаются TCP и системный DNS для записей A и AAAA. Остальной UDP блокируется.</string>
+    <string name="graphite_import">Импортировать Graphite Tunnel</string>
+</resources>

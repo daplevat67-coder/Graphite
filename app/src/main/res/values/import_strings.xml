@@ -1,0 +1,28 @@
+<resources>
+<string name="tunneling_screen">Туннелирование</string>
+<string name="tunneling_screen_hint">Приложения, MTU, DNS и Keepalive · отдельный экран</string>
+<string name="qr_link_import">Импорт · QR, ссылка и JSON</string>
+<string name="import_stop_first">Для импорта отключите VPN и закройте редактор. Входящий импорт будет открыт после этого.</string>
+<string name="import_name_default">QR — WireGuard или AWG</string>
+<string name="import_supported">Сканируйте QR с WG/AWG-конфигом или ссылкой VLESS, VMess, MTProto или SOCKS5, либо вставьте содержимое вручную. Также поддерживаются JSON IKEv2 и .ovpn. JSON Xray импортирует один сервер VLESS или VMess. Маршрутизацию и DNS задаёт GRAPHITE. Содержимое не отправляется на сервис распознавания.</string>
+<string name="scan_camera">Сканировать камерой</string>
+<string name="scan_image">QR из изображения</string>
+<string name="scan_prompt">Наведите камеру на QR конфигурации</string>
+<string name="paste_import">Вставить из буфера</string>
+<string name="clipboard_empty">В буфере нет текста.</string>
+<string name="import_text">Конфиг или ссылка · содержимое скрыто</string>
+<string name="import_check">Проверить содержимое</string>
+<string name="import_working">Обработка…</string>
+<string name="qr_read_error">QR не найден или изображение слишком большое. Выберите более чёткое изображение.</string>
+<string name="import_decode_error">Не удалось разобрать содержимое. Проверьте формат и размер.</string>
+<string name="import_format_unsupported">Формат не поддерживается или повреждён. Нужен WG/AWG-конфиг, JSON Xray, ссылка VLESS/VMess/MTProto, однокадровый Amnezia-код или HTTPS-ссылка. Подписки со списком серверов, другие протоколы и многокадровый QR пока не импортируются.</string>
+<string name="import_download_title">Загрузить конфигурацию?</string>
+<string name="import_download_hint">Будет выполнен HTTPS-запрос к указанному серверу. Адрес может содержать секретный токен. Загружаются только данные конфигурации; автоматического подключения и обновлений подписки нет.</string>
+<string name="import_download_confirm">Загрузить с этого сервера</string>
+<string name="import_download_error">Загрузка не удалась. Проверьте HTTPS, доступность и размер конфигурации. Перенаправления на другой сервер не принимаются.</string>
+<string name="import_config_ready">Конфигурация распознана</string>
+<string name="import_config_hint">Ключи не показываются. При сохранении профиль проходит полную проверку и шифруется в локальном хранилище. Сохранение не запускает VPN.</string>
+<string name="import_profile_name">Имя профиля</string>
+<string name="import_save">Сохранить профиль</string>
+<string name="import_legacy_xray_transport">Текущий Xray не поддерживает старые HTTP/H2/H3 и QUIC как транспорт. Нужен профиль под транспорт, настроенный на сервере, например XHTTP с TLS.</string>
+</resources>

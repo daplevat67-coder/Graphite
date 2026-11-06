@@ -1,0 +1,6 @@
+{
+  "src/main/jniLibs/arm64-v8a/libwg-go.so": "b833b513467127fe6d1679d04f8af0fa5a93ee204df96280911e098aebb8b7cf",
+  "src/main/jniLibs/x86_64/libwg-go.so": "24f7095b6c7decb900f976408e7758d1ac649c9748da530ab5247e0fb5448730",
+  "src/main/jniLibs/armeabi-v7a/libwg-go.so": "faf0938d2964d74ed31269d593eed382b2b6fb166c4505b5fbe1557635f90746",
+  "src/main/jniLibs/x86/libwg-go.so": "8652c3feadd55a4e946e92c966c64cb031aca58b84f7505581fd5c87c52f4a49"
+}

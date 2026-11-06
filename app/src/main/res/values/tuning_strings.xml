@@ -1,0 +1,15 @@
+<resources>
+<string name="profile_protocol_selected">%1$s · Выбран</string>
+<string name="refresh_servers">Обновить серверы</string>
+<string name="ping_settings">Точные настройки ICMP</string>
+<string name="auto_ping">Проверять при открытии серверов</string>
+<string name="auto_ping_hint">Проверять устаревшие замеры при входе. Срок актуальности настраивается ниже.</string>
+<string name="ping_count_setting">Пакетов: %1$d</string>
+<string name="ping_timeout_setting">Тайм-аут ответа: %1$d с</string>
+<string name="ping_interval_setting">Пауза между пакетами: %1$d мс</string>
+<string name="ping_dns_setting">Тайм-аут DNS: %1$d мс</string>
+<string name="ping_accuracy_hint">Главное значение — медиана полученных RTT. Разброс — средняя разница между соседними ответами. Без ответа точная задержка не вычисляется.</string>
+<string name="ping_median">Медиана RTT: %1$.1f мс</string>
+<string name="ping_range">Мин.: %1$.1f · Макс.: %2$.1f мс</string>
+<string name="ping_jitter">Разброс RTT: %1$.1f мс</string>
+</resources>

@@ -1,0 +1,10 @@
+<resources>
+<string name="xray_vpn_channel">GRAPHITE · VLESS и VMess</string>
+<string name="xray_tunnel_ready">Xray и VPN-интерфейс работают</string>
+<string name="xray_ready_hint">Туннель Xray создан. Подключение к серверу устанавливается при передаче данных; наличие интернета этим статусом не подтверждается.</string>
+<string name="xray_engine_status">Состояние ядра Xray</string>
+<string name="xray_edit_title">Профиль VLESS / VMess</string>
+<string name="xray_edit_hint">Редактируйте полную ссылку: адрес, UUID, TLS/Reality и транспорт. Содержимое скрыто, сохраняется зашифрованно. Неподдерживаемые параметры отклоняются.</string>
+<string name="xray_share_link">Ссылка VLESS, VMess, MTProto или JSON Xray</string>
+<string name="xray_edit_failed">Не удалось сохранить профиль. Проверьте UUID, адрес, транспорт, TLS/Reality и поддерживаемый формат.</string>
+</resources>

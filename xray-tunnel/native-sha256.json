@@ -1,0 +1,12 @@
+{
+  "src/main/libs/libXray-classes.jar": "3b22eb310d264319e632ea02b7790d9b32d6f4a08869bbeeb9f48300cde89f42",
+  "src/main/jniLibs/armeabi-v7a/libgojni.so": "275c396c26208f282158e66dea4f9fae79ebafe8d8783733366a7a39c4b9be10",
+  "src/main/jniLibs/arm64-v8a/libgojni.so": "8631d224895f7bee39389dad064e9baa8a5381855e03e60a739665dcda070f0e",
+  "src/main/jniLibs/x86/libgojni.so": "ec22c4554f1a401344ad40da6e4a0c6bd71e12ac657924aa4ac0eae7feecd027",
+  "src/main/jniLibs/x86_64/libgojni.so": "184ef13cf10064d334cbc5f6dddfb905918c030e5006f0174d15b0997864673a",
+  "src/main/libs/hev-socks5-tunnel-classes.jar": "933d77dbbc6a500a912f1702552fe646089b414a0639615aaf75322532b32f02",
+  "src/main/jniLibs/x86_64/libhev-socks5-tunnel.so": "618fdf797aaa0ecdca23705305b148004b109d07d52e816773817085082683df",
+  "src/main/jniLibs/armeabi-v7a/libhev-socks5-tunnel.so": "af97e099f2886dbef42df7e1e35d08da3c7ce1b904c96e62d59d8ab35c9ba485",
+  "src/main/jniLibs/x86/libhev-socks5-tunnel.so": "3f78a46992e8f6b73870cff6e4c188e710d404a81e9e431c1be5499ad2eda7a2",
+  "src/main/jniLibs/arm64-v8a/libhev-socks5-tunnel.so": "9b35e3f1d2c18fb33b5fd73ed505550e2d72bd45ac7e0fdb36df768bcea88bd3"
+}

@@ -1,0 +1,13 @@
+<resources>
+    <string name="awg_title">AmneziaWG · параметры сервера</string>
+    <string name="awg_hint">Значения должны соответствовать серверу. Пустые поля не передаются. Для обычного WireGuard оставьте AWG-поля пустыми. Лимит памяти Android-клиента: Jc ≤ 4096 и Jc × Jmax ≤ 16 МиБ; это лимит приложения, не протокола.</string>
+    <string name="awg_show_fields">Показать параметры AWG · заполнено %1$d</string>
+    <string name="awg_hide_fields">Скрыть параметры AWG · заполнено %1$d</string>
+    <string name="awg_parameter">%1$s</string>
+    <string name="awg_template_hint">Шаблон I-пакета, например &lt;b 0x0102&gt;&lt;r 16&gt;. Пусто — без I-пакета.</string>
+    <string name="awg_hpk_hint">Ключ защиты заголовков AWG3 с сервера, Base64. При ненулевом ключе S1–S4 должны быть не меньше 12.</string>
+    <string name="awg_bool_hint">on / off, true / false или 1 / 0</string>
+    <string name="awg_range_hint">Число либо диапазон через дефис, например 100-200</string>
+    <string name="awg_keepalive_hint">Секунды, 0 — выключено. AWG3 также поддерживает диапазон, например 20-30.</string>
+    <string name="awg_error_config">Некорректные параметры AWG. Проверьте диапазоны H, размеры J/S, шаблоны I-пакетов и HeaderProtectionKey.</string>
+</resources>

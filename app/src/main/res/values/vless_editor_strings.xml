@@ -1,0 +1,23 @@
+<resources>
+    <string name="vless_create">Создать VLESS</string>
+    <string name="vless_edit">Редактировать VLESS</string>
+    <string name="vless_editor_hint">Введи адрес, порт и UUID, которые настроены на твоём сервере. Транспорт и защита должны совпадать с сервером.</string>
+    <string name="vless_address">Домен или IP сервера</string>
+    <string name="vless_port">Порт</string>
+    <string name="vless_transport">Транспорт</string>
+    <string name="vless_security">Защита транспорта</string>
+    <string name="vless_no_security">Без TLS / REALITY</string>
+    <string name="vless_fingerprint">Отпечаток TLS (например chrome)</string>
+    <string name="vless_public_key">Публичный ключ REALITY</string>
+    <string name="vless_tcp_header">Заголовок TCP</string>
+    <string name="vless_path">Путь (path)</string>
+    <string name="vless_hide_advanced">Скрыть дополнительные параметры</string>
+    <string name="vless_transport_json">Дополнительные параметры транспорта (JSON)</string>
+    <string name="vless_bad_name">Введи имя профиля длиной до 80 символов.</string>
+    <string name="vless_bad_port">Введи порт от 1 до 65535.</string>
+    <string name="vless_bad_address">Проверь домен или IP сервера.</string>
+    <string name="vless_bad_uuid">Введи UUID, выданный сервером.</string>
+    <string name="vless_bad_reality">Проверь публичный ключ, Short ID и PQV для REALITY.</string>
+    <string name="vless_requires_tls">Для публичного сервера укажи TLS, REALITY или VLESS Encryption.</string>
+    <string name="vless_bad_settings">Проверь совместимость транспорта и защиты, а также дополнительные параметры.</string>
+</resources>

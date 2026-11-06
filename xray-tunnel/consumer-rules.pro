@@ -1,0 +1,3 @@
+-keep class libXray.** { *; }
+-keep class go.** { *; }
+-keep class hev.htproxy.TProxyService { *; }

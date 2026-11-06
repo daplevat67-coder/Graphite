@@ -1,0 +1,26 @@
+<resources>
+<string name="server">Сервер</string>
+<string name="servers">Серверы</string>
+<string name="server_details">Сведения о сервере</string>
+<string name="server_checks">Проверить серверы</string>
+<string name="server_checks_hint">Пинг и подключение в карточках серверов</string>
+<string name="traffic">Трафик</string>
+<string name="probe_all">Проверить все серверы</string>
+<string name="probe_start">Проверить пинг</string>
+<string name="probe_running">Проверяем…</string>
+<string name="probe_path">ICMP через текущую сеть</string>
+<string name="probe_first_peer">Проверяется адрес первого peer.</string>
+<string name="probe_ms">%1$.1f мс</string>
+<string name="probe_less_ms">&lt;%1$.1f мс</string>
+<string name="probe_ok">Сервер отвечает на ICMP</string>
+<string name="probe_partial">Получены не все ответы</string>
+<string name="probe_no_reply">Ответа ICMP нет. Сервер может запрещать пинг; это не проверка работоспособности VPN.</string>
+<string name="probe_unavailable">Android не разрешил ICMP или утилита ping недоступна.</string>
+<string name="probe_dns">Не удалось определить IP-адрес сервера.</string>
+<string name="probe_invalid">В профиле нет корректного адреса сервера.</string>
+<string name="probe_reply">Ответ получен без значения задержки</string>
+<string name="probe_error">Не удалось выполнить проверку ICMP.</string>
+<string name="probe_packets">Ответов: %1$d / %2$d</string>
+<string name="probe_loss">Потери: %1$.0f%%</string>
+<string name="probe_time">Проверено: %1$s</string>
+</resources>

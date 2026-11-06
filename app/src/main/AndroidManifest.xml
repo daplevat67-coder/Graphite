@@ -1,0 +1,31 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SYSTEM_EXEMPTED"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <queries><intent><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent></queries>
+    <application android:hardwareAccelerated="true" android:allowBackup="false" android:fullBackupContent="false" android:dataExtractionRules="@xml/data_extraction_rules" android:label="@string/app_name" android:icon="@drawable/ic_launcher" android:supportsRtl="true" android:theme="@style/Theme.Graphite">
+        <activity android:name=".ui.importing.SecureCaptureActivity" android:exported="false" android:screenOrientation="fullSensor" android:theme="@style/zxing_CaptureTheme"/>
+        <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop">
+            <intent-filter><action android:name="android.intent.action.VIEW"/><category android:name="android.intent.category.DEFAULT"/><category android:name="android.intent.category.BROWSABLE"/><data android:scheme="vpn"/><data android:scheme="wireguard"/><data android:scheme="awg"/><data android:scheme="vless"/><data android:scheme="vmess"/><data android:scheme="socks5"/></intent-filter>
+            <intent-filter><action android:name="android.intent.action.VIEW"/><category android:name="android.intent.category.DEFAULT"/><category android:name="android.intent.category.BROWSABLE"/><data android:scheme="tg" android:host="proxy"/></intent-filter>
+            <intent-filter><action android:name="android.intent.action.SEND"/><category android:name="android.intent.category.DEFAULT"/><data android:mimeType="text/plain"/></intent-filter><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity>
+        <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.openvpn" android:exported="false" android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/openvpn_paths"/>
+        </provider>
+        <service android:name="org.amnezia.awg.backend.GoBackend$VpnService" tools:node="remove"/>
+        <!-- Android15 ForegroundServiceTypePolicy accepts OP_ACTIVATE_VPN from VPN consent.
+             This runtime authorization is not visible to static lint. No alarm permissions needed. -->
+        <service android:name=".vpn.GraphiteVpnService" android:exported="true" android:permission="android.permission.BIND_VPN_SERVICE" android:foregroundServiceType="systemExempted" tools:ignore="ForegroundServicePermission">
+            <intent-filter android:priority="10"><action android:name="android.net.VpnService"/></intent-filter>
+            <meta-data android:name="android.net.VpnService.SUPPORTS_ALWAYS_ON" android:value="true"/>
+        </service>
+        <service android:name=".vpn.xray.XrayVpnService" android:process=":xray" android:exported="true" android:permission="android.permission.BIND_VPN_SERVICE" android:foregroundServiceType="systemExempted" tools:ignore="ForegroundServicePermission">
+            <intent-filter><action android:name="android.net.VpnService"/></intent-filter>
+            <meta-data android:name="android.net.VpnService.SUPPORTS_ALWAYS_ON" android:value="true"/>
+        </service>
+    </application>
+</manifest>

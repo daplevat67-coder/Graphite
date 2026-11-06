@@ -1,0 +1,12 @@
+<resources>
+    <string name="page_style">Движение листа</string>
+    <string name="page_style_curl">Перелистывание</string>
+    <string name="page_style_roll">Сворачивание</string>
+    <string name="page_style_hint">Изгиб страницы или бумажный рулон; направление следует переходу</string>
+    <string name="page_duration_precise">Длительность: %1$.1f с</string>
+    <string name="drawing_animation">Прорисовка меню</string>
+    <string name="drawing_animation_hint">Карандаш проявляет элементы при открытии и обновлении</string>
+    <string name="drawing_duration">Прорисовка: %1$d мс</string>
+    <string name="drawing_refresh">Перерисовать меню</string>
+    <string name="drawing_wait">Выполняется операция…</string>
+</resources>

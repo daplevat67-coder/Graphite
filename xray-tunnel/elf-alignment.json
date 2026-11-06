@@ -1,0 +1,42 @@
+{
+  "src/main/jniLibs/armeabi-v7a/libhev-socks5-tunnel.so": [
+    "0x4000",
+    "0x4000",
+    "0x4000"
+  ],
+  "src/main/jniLibs/armeabi-v7a/libgojni.so": [
+    "0x4000",
+    "0x4000",
+    "0x4000"
+  ],
+  "src/main/jniLibs/x86/libhev-socks5-tunnel.so": [
+    "0x4000",
+    "0x4000",
+    "0x4000"
+  ],
+  "src/main/jniLibs/x86/libgojni.so": [
+    "0x4000",
+    "0x4000",
+    "0x4000"
+  ],
+  "src/main/jniLibs/x86_64/libhev-socks5-tunnel.so": [
+    "0x4000",
+    "0x4000",
+    "0x4000"
+  ],
+  "src/main/jniLibs/x86_64/libgojni.so": [
+    "0x4000",
+    "0x4000",
+    "0x4000"
+  ],
+  "src/main/jniLibs/arm64-v8a/libhev-socks5-tunnel.so": [
+    "0x4000",
+    "0x4000",
+    "0x4000"
+  ],
+  "src/main/jniLibs/arm64-v8a/libgojni.so": [
+    "0x4000",
+    "0x4000",
+    "0x4000"
+  ]
+}
