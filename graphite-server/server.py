@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import base64
 from collections import Counter
+from contextlib import suppress
 import hmac
 import ipaddress
 import socket
@@ -43,30 +44,62 @@ async def dial(host, port, allow_loopback):
     raise OSError("No allowed destination was reachable")
 
 
-async def to_frames(reader, writer):
+async def to_frames(reader, writer, touch):
     while True:
-        data = await asyncio.wait_for(reader.read(CHUNK), IDLE)
+        data = await reader.read(CHUNK)
         writer.write(struct.pack("!H", len(data)) + data)
-        await asyncio.wait_for(writer.drain(), IDLE)
+        await writer.drain()
         if not data:
             return
+        touch()
 
 
-async def from_frames(reader, writer):
+async def from_frames(reader, writer, touch):
     while True:
-        length, = struct.unpack("!H", await asyncio.wait_for(reader.readexactly(2), IDLE))
+        length, = struct.unpack("!H", await reader.readexactly(2))
         if not length:
             writer.write_eof()
             return
         if length > CHUNK:
             raise ValueError("Frame too large")
-        writer.write(await asyncio.wait_for(reader.readexactly(length), IDLE))
-        await asyncio.wait_for(writer.drain(), IDLE)
+        writer.write(await reader.readexactly(length))
+        await writer.drain()
+        touch()
+
+
+async def transfer_frames(reader, writer, incoming, upstream):
+    loop = asyncio.get_running_loop()
+    last_activity = loop.time()
+
+    def touch():
+        nonlocal last_activity
+        last_activity = loop.time()
+
+    tasks = [
+        asyncio.create_task(from_frames(reader, upstream, touch)),
+        asyncio.create_task(to_frames(incoming, writer, touch)),
+    ]
+    transfer = asyncio.gather(*tasks)
+    try:
+        while True:
+            remaining = IDLE - (loop.time() - last_activity)
+            if remaining <= 0:
+                raise TimeoutError
+            done, _ = await asyncio.wait({transfer}, timeout=remaining)
+            if done:
+                await transfer
+                return
+    finally:
+        transfer.cancel()
+        with suppress(asyncio.CancelledError, OSError, ValueError, asyncio.IncompleteReadError):
+            await transfer
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
 
 
 async def relay(reader, writer, allow_loopback):
     upstream = None
-    tasks = []
     try:
         port, length = struct.unpack("!HH", await asyncio.wait_for(reader.readexactly(4), 8))
         if port == 0 or not 1 <= length <= 253:
@@ -82,18 +115,12 @@ async def relay(reader, writer, allow_loopback):
             return
         writer.write(b"\0")
         await writer.drain()
-        tasks = [asyncio.create_task(from_frames(reader, upstream)), asyncio.create_task(to_frames(incoming, writer))]
-        await asyncio.gather(*tasks)
+        await transfer_frames(reader, writer, incoming, upstream)
     except (OSError, TimeoutError, ValueError, asyncio.IncompleteReadError):
         pass
     finally:
-        for task in tasks:
-            task.cancel()
-        if tasks:
-            await asyncio.gather(*tasks, return_exceptions=True)
         if upstream is not None:
             upstream.close()
-        writer.close()
 
 
 async def main(args):
@@ -110,52 +137,88 @@ async def main(args):
 
 
 async def serve(args, context, token):
+    loop = asyncio.get_running_loop()
     active = pending = 0
     pending_by_ip = Counter()
+    clients = set()
 
-    async def handle(reader, writer):
-        nonlocal active, pending
-        peer = writer.get_extra_info("peername")
-        if not peer:
-            writer.close()
-            return
-        ip = ipaddress.ip_address(peer[0])
-        if ip.version == 6:
-            ip = ip.ipv4_mapped or ip
-        if pending >= MAX_PENDING or pending_by_ip[ip] >= MAX_PENDING_PER_IP:
-            writer.close()
-            return
-        pending += 1
-        pending_by_ip[ip] += 1
+    def release_pending(ip):
+        nonlocal pending
+        pending -= 1
+        pending_by_ip[ip] -= 1
+        if pending_by_ip[ip] == 0:
+            del pending_by_ip[ip]
+
+    async def handle(connection, ip):
+        nonlocal active
+        writer = None
+        admitted = False
+        reply_sent = False
+        pending_slot = True
         try:
-            try:
-                header = await asyncio.wait_for(reader.readexactly(37), AUTH_TIMEOUT)
-            finally:
-                pending -= 1
-                pending_by_ip[ip] -= 1
-                if pending_by_ip[ip] == 0:
-                    del pending_by_ip[ip]
+            reader = asyncio.StreamReader()
+            protocol = asyncio.StreamReaderProtocol(reader)
+            transport, _ = await loop.connect_accepted_socket(
+                lambda: protocol, connection, ssl=context,
+                ssl_handshake_timeout=AUTH_TIMEOUT, ssl_shutdown_timeout=AUTH_TIMEOUT,
+            )
+            writer = asyncio.StreamWriter(transport, protocol, reader, loop)
+            header = await asyncio.wait_for(reader.readexactly(37), AUTH_TIMEOUT)
+
             if header[:4] != MAGIC or not hmac.compare_digest(header[5:], token):
                 return
-            if header[4] == 0:
-                writer.write(b"\x00")
-                await asyncio.wait_for(writer.drain(), AUTH_TIMEOUT)
+            if header[4] not in (0, 1):
                 return
-            if header[4] != 1 or active >= MAX_ACTIVE:
+            if active >= MAX_ACTIVE or header[4] == 0:
+                writer.write(b"\x01" if active >= MAX_ACTIVE else b"\x00")
+                await asyncio.wait_for(writer.drain(), AUTH_TIMEOUT)
+                reply_sent = True
                 return
             active += 1
-            try:
-                await relay(reader, writer, args.allow_loopback)
-            finally:
-                active -= 1
+            admitted = True
+            pending_slot = False
+            release_pending(ip)
+            await relay(reader, writer, args.allow_loopback)
         except (OSError, TimeoutError, asyncio.IncompleteReadError):
             pass
         finally:
-            writer.close()
+            try:
+                if writer is None:
+                    connection.close()
+                elif admitted or reply_sent:
+                    writer.close()
+                    with suppress(OSError, TimeoutError):
+                        await writer.wait_closed()
+                else:
+                    writer.transport.abort()
+            finally:
+                if admitted:
+                    active -= 1
+                if pending_slot:
+                    release_pending(ip)
 
-    server = await asyncio.start_server(handle, args.listen, args.port, ssl=context, ssl_handshake_timeout=AUTH_TIMEOUT, ssl_shutdown_timeout=AUTH_TIMEOUT)
-    async with server:
-        await server.serve_forever()
+    family = socket.AF_INET6 if ":" in args.listen else socket.AF_INET
+    with socket.create_server((args.listen, args.port), family=family, backlog=MAX_PENDING) as listener:
+        listener.setblocking(False)
+        try:
+            while True:
+                await asyncio.sleep(0)
+                connection, peer = await loop.sock_accept(listener)
+                ip = ipaddress.ip_address(peer[0])
+                if ip.version == 6:
+                    ip = ip.ipv4_mapped or ip
+                if pending >= MAX_PENDING or pending_by_ip[ip] >= MAX_PENDING_PER_IP:
+                    connection.close()
+                    continue
+                pending += 1
+                pending_by_ip[ip] += 1
+                task = asyncio.create_task(handle(connection, ip))
+                clients.add(task)
+                task.add_done_callback(clients.discard)
+        finally:
+            for task in clients:
+                task.cancel()
+            await asyncio.gather(*clients, return_exceptions=True)
 
 
 if __name__ == "__main__":

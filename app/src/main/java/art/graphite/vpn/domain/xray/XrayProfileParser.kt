@@ -202,10 +202,49 @@ object XrayProfileParser {
         return try{Base64.getUrlDecoder().decode(value)}catch(_:IllegalArgumentException){Base64.getDecoder().decode(value)}
     }
     private fun utf8(bytes:ByteArray)=Charsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT).decode(ByteBuffer.wrap(bytes)).toString()
-    internal fun boundDepth(value:String,maxDepth:Int=16) {
-        var depth=0;var quoted=false;var escaped=false
-        for(c in value){if(quoted){if(escaped)escaped=false else if(c=='\\')escaped=true else if(c=='"')quoted=false}else when(c){'"'->quoted=true;'[','{'->{depth++;check(depth<=maxDepth,"XRAY_JSON_DEPTH")};']','}'->{depth--;check(depth>=0,"XRAY_JSON_DEPTH")}}}
-        check(!quoted && depth==0,"XRAY_JSON_DEPTH")
+    private val jsonLiteral = Regex("""(?:true|false|null|-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?)(?=[ \t\r\n,}\]]|$)""")
+
+    internal fun boundDepth(value: String, maxDepth: Int = 16) {
+        var depth = 0
+        var index = 0
+        while (index < value.length) {
+            when (value[index++]) {
+                ' ', '\t', '\r', '\n', ',', ':' -> Unit
+                '[', '{' -> check(++depth <= maxDepth, "XRAY_JSON_DEPTH")
+                ']', '}' -> check(--depth >= 0, "XRAY_JSON_DEPTH")
+                '"' -> {
+                    var closed = false
+                    while (index < value.length) {
+                        val char = value[index++]
+                        if (char == '"') {
+                            closed = true
+                            break
+                        }
+                        check(char >= ' ', "XRAY_JSON_SYNTAX")
+                        if (char == '\\') {
+                            check(index < value.length, "XRAY_JSON_SYNTAX")
+                            when (value[index++]) {
+                                '"', '\\', '/', 'b', 'f', 'n', 'r', 't' -> Unit
+                                'u' -> {
+                                    check(index + 4 <= value.length, "XRAY_JSON_SYNTAX")
+                                    repeat(4) {
+                                        check(value[index++] in "0123456789abcdefABCDEF", "XRAY_JSON_SYNTAX")
+                                    }
+                                }
+                                else -> check(false, "XRAY_JSON_SYNTAX")
+                            }
+                        }
+                    }
+                    check(closed, "XRAY_JSON_SYNTAX")
+                }
+                else -> {
+                    val literal = jsonLiteral.matchAt(value, index - 1)
+                        ?: throw XrayProfileException("XRAY_JSON_SYNTAX")
+                    index = literal.range.last + 1
+                }
+            }
+        }
+        check(depth == 0, "XRAY_JSON_DEPTH")
     }
     private fun check(condition:Boolean,code:String){if(!condition)throw XrayProfileException(code)}
 }

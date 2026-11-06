@@ -49,7 +49,9 @@ internal object XrayJsonProfile {
         }) ?: JSONObject()
         val header = transport.optJSONObject("header")
         val request = header?.optJSONObject("request")
-        val tls = stream.optJSONObject("tlsSettings") ?: JSONObject()
+        val tls = if (stream.has("tlsSettings")) stream.getJSONObject("tlsSettings") else JSONObject()
+        val supportedTlsOptions = setOf("allowInsecure", "serverName", "fingerprint", "alpn", "echConfigList")
+        require(tls.keys().asSequence().all { it in supportedTlsOptions }) { "UNSUPPORTED_TLS_OPTION" }
         val reality = stream.optJSONObject("realitySettings") ?: JSONObject()
         require(!tls.has("allowInsecure") || tls.getBoolean("allowInsecure") == false)
         require(user.optString("alterId", "0") == "0")

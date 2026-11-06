@@ -161,14 +161,7 @@ object ImportPayloadDecoder {
         if(distinct.size!=1)throw Rejected(ImportRejection.UNSUPPORTED_AMNEZIA)
         return config(distinct.single(),name,ImportFormat.AMNEZIA)
     }
-    private fun boundJsonDepth(text:String) {
-        var depth=0;var string=false;var escaped=false
-        for(c in text) {
-            if(string){if(escaped)escaped=false else if(c=='\\')escaped=true else if(c=='"')string=false}
-            else when(c){'"'->string=true;'[','{'->{depth++;if(depth>32)throw Rejected(ImportRejection.INVALID_DATA)};']','}'->{depth--;if(depth<0)throw Rejected(ImportRejection.INVALID_DATA)}}
-        }
-        if(depth!=0 || string)throw Rejected(ImportRejection.INVALID_DATA)
-    }
+    private fun boundJsonDepth(text: String) = XrayProfileParser.boundDepth(text, maxDepth = 32)
     private fun looksLikeConfig(text:String):Boolean {
         var interfaze=false;var peer=false
         for(line in text.lineSequence()) {
