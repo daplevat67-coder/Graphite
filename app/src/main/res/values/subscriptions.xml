@@ -1,0 +1,18 @@
+<resources>
+    <string name="subscriptions_title">Подписки</string>
+    <string name="subscriptions_hint">Добавь HTTPS-ссылку подписки. Серверы появятся в общем списке и в разделе своего протокола. Обновление запускается вручную.</string>
+    <string name="subscription_name">Название подписки</string>
+    <string name="subscription_url">HTTPS-ссылка подписки</string>
+    <string name="subscription_add">Добавить подписку</string>
+    <string name="subscription_refresh">Обновить подписку</string>
+    <string name="subscription_refresh_all">Обновить все подписки</string>
+    <string name="subscription_delete">Удалить подписку</string>
+    <string name="subscription_delete_hint">Удалить «%1$s» и её серверы? Отдельно добавленные подключения сохранятся.</string>
+    <string name="subscription_updated">Подписки обновлены</string>
+    <string name="subscription_failed">Не удалось обновить одну или несколько подписок. Их прежние серверы сохранены. Поддерживаются списки ссылок, Base64 и JSON, до 200 серверов суммарно.</string>
+    <string name="subscription_invalid">Введи название и корректную HTTPS-ссылку без логина и пароля в адресе.</string>
+    <string name="subscription_stop_vpn">Отключи VPN перед изменением подписок.</string>
+    <string name="subscription_count">Серверов: %1$d</string>
+    <string name="subscription_date">Обновлено: %1$s</string>
+    <string name="subscription_origin">Подписка: %1$s</string>
+</resources>

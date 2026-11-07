@@ -45,6 +45,7 @@ class XrayVpnService:VpnService(){
  }
  private fun start(id:String?,captured:Bundle?){var stage="PROFILE";try{
   val store=ProfileStore(this);val profile=if(id==null)store.selected() else store.profile(id);requireNotNull(profile)
+  require(profile.protocolId != "graphite") { "PROTOCOL_DISABLED" }
   if(!profile.isXray){startForegroundService(Intent(this,GraphiteVpnService::class.java));wanted=false;finish(null);return}
   stage="SETTINGS";val settingsSnapshot=captured?.let{XraySettings.decode(it)} ?: XraySettings.Snapshot(ConnectionSettingsStore(this).load(),TunnelOptionsStore(this).load());options=settingsSnapshot.connection;val settings=settingsSnapshot.tunnel;TunnelConfigOverrides.validate(settings)
   snapshot=VpnSnapshot(phase=VpnPhase.STARTING,profileId=profile.id,statisticsEnabled=options.liveStatistics);publish();stage="CONSENT";require(prepare(this)==null)

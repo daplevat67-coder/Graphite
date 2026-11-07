@@ -58,7 +58,7 @@
     <string name="tests_text">Стабильность, задержки и накладные расходы. Стенд пока не создан.</string>
     <string name="back">Назад</string>
     <string name="close">Понятно</string>
-    <string name="version">Версия 0.2.8-alpha1 · WG / AWG / Xray</string>
+    <string name="version">Версия 0.3.5-alpha1 · WG / AWG / Xray · подписки</string>
 
     <string name="connection_settings">Подключение и восстановление</string>
     <string name="connection_auto_retry">Повторять при ошибке</string>

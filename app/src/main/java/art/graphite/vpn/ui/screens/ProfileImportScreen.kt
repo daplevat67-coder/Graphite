@@ -32,7 +32,7 @@ internal fun readProfileClipboard(context: Context): String? {
 }
 
 @Composable internal fun ProfileImportScreen(initialText:String?,onSeedConsumed:()->Unit,
-    onFile:(()->Unit)?=null,onWireGuard:(()->Unit)?=null,onVless:(()->Unit)?=null,onSelfHosted:(()->Unit)?=null,onImport:suspend(String,ByteArray)->Boolean) {
+    onFile:(()->Unit)?=null,onWireGuard:(()->Unit)?=null,onVless:(()->Unit)?=null,onSubscription:((String)->Unit)?=null,onImport:suspend(String,ByteArray)->Boolean) {
     val context=LocalContext.current;val scope=rememberCoroutineScope()
     var text by remember{mutableStateOf(initialText ?: "")}
     var name by remember{mutableStateOf(context.getString(R.string.import_name_default))}
@@ -63,9 +63,9 @@ internal fun readProfileClipboard(context: Context): String? {
         }
     }
     SketchCard {
-        onSelfHosted?.let { start ->
-            OutlinedButton(onClick = start, enabled = !running, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.selfhost_title))
+        onSubscription?.let { start ->
+            OutlinedButton(onClick={start("")},enabled=!running,modifier=Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.subscriptions_title))
             }
         }
         onVless?.let { OutlinedButton(onClick=it,enabled=!running,modifier=Modifier.fillMaxWidth()){
@@ -88,6 +88,9 @@ internal fun readProfileClipboard(context: Context): String? {
     }
     when(val current=payload) {
         is ImportPayload.HttpsConfigLink->SketchCard {
+            onSubscription?.let { add ->
+                OutlinedButton(onClick={add(current.uri.toString())},enabled=!running) { Text(stringResource(R.string.subscription_add)) }
+            }
             Text(stringResource(R.string.import_download_title),style=MaterialTheme.typography.titleMedium)
             Text(current.uri.host,style=MaterialTheme.typography.bodyLarge)
             Text(stringResource(R.string.import_download_hint),style=MaterialTheme.typography.bodyMedium)

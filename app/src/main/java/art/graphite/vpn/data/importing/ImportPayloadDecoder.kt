@@ -47,10 +47,7 @@ object ImportPayloadDecoder {
                     val profile=XrayProfileParser.parse(text)
                     ConfigPayload(profile.originalShareLink.toByteArray(Charsets.UTF_8),profile.name,ImportFormat.XRAY)
                 }
-                GraphiteProfile.matches(text) -> {
-                    val profile = GraphiteProfile.parse(text)
-                    ConfigPayload(profile.link.toByteArray(Charsets.UTF_8), "Graphite Tunnel", ImportFormat.GRAPHITE)
-                }
+                GraphiteProfile.matches(text) -> Unsupported(ImportRejection.UNSUPPORTED_PROTOCOL)
                 MtProxy.matches(text) -> {
                     val proxy = MtProxy.parse(text)
                     ConfigPayload(proxy.link.toByteArray(Charsets.UTF_8), "MTProto Proxy", ImportFormat.MTPROTO)

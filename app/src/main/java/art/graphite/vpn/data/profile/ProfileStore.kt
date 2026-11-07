@@ -23,7 +23,8 @@ data class StoredProfile(
     val routes: List<String>,
     val protocolId: String = "wg",
     val fileExtension: String = "conf",
-    val source: ProfileSource = ProfileSource.UNKNOWN
+    val source: ProfileSource = ProfileSource.UNKNOWN,
+    val subscriptionName: String? = null
 ) {
     val isXray:Boolean get()=protocolId in setOf("vless","vmess","socks5","graphite")
     val isMtProxy:Boolean get()=protocolId=="mtproto"
@@ -41,10 +42,11 @@ class ProfileStore(context: Context) {
     private val preferences = app.getSharedPreferences("selected-wireguard-profile", Context.MODE_PRIVATE)
 
     fun list(): List<StoredProfile> = guarded {
+        val owners = readSubscriptions().flatMap { item -> item.profileIds.map { it to item.name } }.toMap()
         files().map { entry ->
-            val id = entry.name.removeSuffix(EXT)
+            val id = entry.name.removeSuffix(EXT).removeSuffix(".gws")
             val (name, config, source) = read(id)
-            metadata(id, name, config).copy(source = source)
+            metadata(id, name, config).copy(source = source, subscriptionName = owners[id])
         }.sortedBy { it.name.lowercase() }
     }
 
@@ -58,13 +60,14 @@ class ProfileStore(context: Context) {
                 javax.crypto.Cipher.DECRYPT_MODE, storageKey, javax.crypto.spec.GCMParameterSpec(128, ByteArray(12))
             )
         } catch (_: Exception) { throw ProfileException("STORAGE_KEY_UNAVAILABLE") }
+        val owners = readSubscriptions().flatMap { item -> item.profileIds.map { it to item.name } }.toMap()
         val healthy = mutableListOf<StoredProfile>()
         val unreadable = mutableListOf<String>()
         entries.forEach { entry ->
-            val id = entry.name.removeSuffix(EXT)
+            val id = entry.name.removeSuffix(EXT).removeSuffix(".gws")
             try {
                 val (name, config, source) = read(id, storageKey)
-                healthy += metadata(id, name, config).copy(source = source)
+                healthy += metadata(id, name, config).copy(source = source, subscriptionName = owners[id])
             } catch (error: ProfileException) {
                 if (error.safeCode == "STORAGE_KEY_UNAVAILABLE") throw error
                 unreadable += id
@@ -76,7 +79,7 @@ class ProfileStore(context: Context) {
     fun selected(): StoredProfile? = guarded {
         val id = preferences.getString(SELECTED, null) ?: return@guarded null
         checkId(id)
-        if (!file(id).isFile) {
+        if (!file(id).isFile || (file(id).name.endsWith(".gws") && readSubscriptions().none { id in it.profileIds })) {
             if (!preferences.edit().remove(SELECTED).commit()) throw ProfileException("STORAGE_UNAVAILABLE")
             return@guarded null
         }
@@ -90,6 +93,7 @@ class ProfileStore(context: Context) {
         val cleanName = ProfileValidation.name(name)
         val config = ProfileDocuments.parse(bytes)
         val id = UUID.randomUUID().toString()
+        if (config.graphite != null) throw ProfileException("INVALID_CONFIG")
         val profile = metadata(id, cleanName, config).copy(source = source ?: when {
             config.xray?.originalShareLink?.startsWith('{') == true || config.ike != null -> ProfileSource.JSON
             config.xray != null || config.graphite != null || config.mtProxy != null -> ProfileSource.LINK
@@ -132,6 +136,10 @@ class ProfileStore(context: Context) {
         checkId(id)
         if (preferences.getString(SELECTED, null) == id && !preferences.edit().remove(SELECTED).commit())
             throw ProfileException("STORAGE_UNAVAILABLE")
+        val owned = readSubscriptions()
+        if (owned.any { id in it.profileIds }) saveSubscriptions(owned.map {
+            SubscriptionRecord(it.id, it.name, it.url, it.profileIds - id, it.updatedAt)
+        }, key())
         AtomicFile(file(id)).delete()
         if (file(id).exists()) throw ProfileException("STORAGE_UNAVAILABLE")
     }
@@ -159,6 +167,104 @@ class ProfileStore(context: Context) {
     }
 
     fun export(id: String): ByteArray = guarded { read(id).second.bytes() }
+
+    fun subscriptions(): List<SubscriptionRecord> = guarded { readSubscriptions() }
+
+    /** New files become visible together via the encrypted atomic index. Failed refreshes preserve the old snapshot. */
+    fun replaceSubscription(id: String, name: String, url: String,
+                            entries: List<art.graphite.vpn.data.subscription.SubscriptionEntry>) = guarded {
+        checkId(id)
+        val cleanName = ProfileValidation.name(name)
+        art.graphite.vpn.data.subscription.SubscriptionDecoder.url(url)
+        require(entries.size in 1..200)
+        val records = readSubscriptions()
+        require(records.any { it.id == id } || records.size < 10)
+        require(records.none { it.id != id && it.url == url })
+        val previous = records.find { it.id == id }
+        val oldIds = previous?.profileIds.orEmpty()
+        require(files().size - oldIds.size + entries.size <= MAX_PROFILES)
+        val storageKey = key()
+        val created = mutableListOf<String>()
+        val reused = mutableSetOf<String>()
+        fun identity(label: String, data: ByteArray) = label + "\u0000" +
+            java.util.Base64.getEncoder().encodeToString(java.security.MessageDigest.getInstance("SHA-256").digest(data))
+        val reusable = oldIds.groupBy { old ->
+            val (label, document, _) = read(old, storageKey)
+            val data = document.bytes()
+            try { identity(label, data) } finally { data.fill(0) }
+        }.mapValues { (_, values) -> java.util.ArrayDeque(values) }
+        val ids = mutableListOf<String>()
+        try {
+            entries.forEach { entry ->
+                val document = ProfileDocuments.parse(entry.bytes)
+                require(document.graphite == null)
+                val canonical = document.bytes()
+                try {
+                    val existing = reusable[identity(entry.name, canonical)]?.pollFirst()
+                    if (existing != null) { reused += existing; ids += existing }
+                    else {
+                        val next = UUID.randomUUID().toString()
+                        val blob = ProfileCodec.encrypt(ProfilePayload(ProfileValidation.name(entry.name), canonical, if (document.xray?.originalShareLink?.startsWith('{') == true || document.ike != null) ProfileSource.JSON else if (document.wireGuard != null || document.openVpn != null) ProfileSource.FILE else ProfileSource.LINK), storageKey, next)
+                        val atomic = AtomicFile(File(directory, "$next.gws"))
+                        ensureDirectory()
+                        val stream = atomic.startWrite()
+                        try { stream.write(blob); atomic.finishWrite(stream) }
+                        catch (e: Exception) { atomic.failWrite(stream); throw e }
+                        created += next; ids += next
+                    }
+                } finally { canonical.fill(0) }
+            }
+            val next = SubscriptionRecord(id, cleanName, url, ids, System.currentTimeMillis())
+            saveSubscriptions(records.filter { it.id != id } + next, storageKey)
+        } catch (failure: Exception) {
+            created.forEach { AtomicFile(File(directory, "$it.gws")).delete() }
+            throw failure
+        }
+        // The index is committed: leftover old files are invisible, even after interruption.
+        (oldIds - reused).forEach { AtomicFile(File(directory, "$it.gws")).delete() }
+    }
+
+    fun deleteSubscription(id: String) = guarded {
+        checkId(id)
+        val records = readSubscriptions()
+        val old = records.find { it.id == id } ?: return@guarded
+        saveSubscriptions(records.filter { it.id != id }, key())
+        old.profileIds.forEach { AtomicFile(File(directory, "$it.gws")).delete() }
+    }
+    private fun readSubscriptions(): List<SubscriptionRecord> {
+        val atomic = AtomicFile(File(directory, "subscriptions.enc"))
+        if (!atomic.baseFile.exists() && !File(directory, "subscriptions.enc.bak").exists()) return emptyList()
+        val bytes = atomic.openRead().use { input ->
+            val out = java.io.ByteArrayOutputStream(); val buffer = ByteArray(4096)
+            while (true) { val n = input.read(buffer); if (n < 0) break; require(out.size() + n <= ProfileCodec.MAX_BLOB_BYTES); out.write(buffer, 0, n) }
+            out.toByteArray()
+        }
+        val payload = ProfileCodec.decrypt(bytes, key(), "subscriptions-v1")
+        try {
+            val array = org.json.JSONArray(payload.config.toString(Charsets.UTF_8))
+            require(array.length() <= 10)
+            return (0 until array.length()).map { i ->
+                val item = array.getJSONObject(i)
+                val ids = item.getJSONArray("profiles")
+                require(ids.length() <= MAX_PROFILES)
+                SubscriptionRecord(item.getString("id").also(::checkId), item.getString("name"), item.getString("url"),
+                    (0 until ids.length()).map { ids.getString(it).also(::checkId) }, item.getLong("updated"))
+            }
+        } finally { payload.config.fill(0) }
+    }
+    private fun saveSubscriptions(records: List<SubscriptionRecord>, storageKey: SecretKey) {
+        val array = org.json.JSONArray()
+        records.forEach { item -> array.put(org.json.JSONObject().put("id", item.id).put("name", item.name).put("url", item.url)
+            .put("updated", item.updatedAt).put("profiles", org.json.JSONArray(item.profileIds))) }
+        val plain = array.toString().toByteArray(Charsets.UTF_8)
+        try {
+            val blob = ProfileCodec.encrypt(ProfilePayload("subscriptions", plain), storageKey, "subscriptions-v1")
+            ensureDirectory()
+            val atomic = AtomicFile(File(directory, "subscriptions.enc"))
+            val stream = atomic.startWrite()
+            try { stream.write(blob); atomic.finishWrite(stream) } catch (e: Exception) { atomic.failWrite(stream); throw e }
+        } finally { plain.fill(0) }
+    }
 
     private fun write(id: String, encrypted: ByteArray) {
         ensureDirectory()
@@ -201,12 +307,18 @@ class ProfileStore(context: Context) {
             config.peers.flatMap { peer -> peer.allowedIps.map { it.toString() } }.distinct(),
             if(AwgParameters.isAwg(config)) "awg" else "wg")
     }
-    private fun file(id: String) = File(directory, "$id$EXT")
+    private fun file(id: String): File {
+        val standalone = File(directory, "$id$EXT")
+        val managed = File(directory, "$id.gws")
+        return if (managed.exists() || File(directory, "$id.gws.bak").exists()) managed else standalone
+    }
     private fun files(): List<File> {
         if (!directory.exists()) return emptyList()
         if (!directory.isDirectory) throw ProfileException("STORAGE_UNAVAILABLE")
         val entries = directory.listFiles() ?: throw ProfileException("STORAGE_UNAVAILABLE")
-        return entries.filter { it.isFile && it.name.endsWith(EXT) && isId(it.name.removeSuffix(EXT)) }
+        val managed = readSubscriptions().flatMap { it.profileIds }.toSet()
+        return entries.filter { it.isFile && ((it.name.endsWith(EXT) && isId(it.name.removeSuffix(EXT))) ||
+            (it.name.endsWith(".gws") && it.name.removeSuffix(".gws") in managed)) }
             .also { if (it.size > MAX_PROFILES) throw ProfileException("PROFILE_LIMIT") }
     }
     private fun ensureDirectory() {
@@ -219,7 +331,7 @@ class ProfileStore(context: Context) {
         val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
         val existing = store.getKey(KEY_ALIAS, null)
         if (existing != null) return existing as? SecretKey ?: throw ProfileException("STORAGE_KEY_UNAVAILABLE")
-        if (files().isNotEmpty()) throw ProfileException("STORAGE_KEY_UNAVAILABLE")
+        if (directory.listFiles().orEmpty().any { it.name.endsWith(EXT) || it.name.endsWith(".gws") || it.name.startsWith("subscriptions.enc") }) throw ProfileException("STORAGE_KEY_UNAVAILABLE")
         val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
         generator.init(KeyGenParameterSpec.Builder(KEY_ALIAS, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
             .setKeySize(256).setBlockModes(KeyProperties.BLOCK_MODE_GCM)
@@ -236,6 +348,6 @@ class ProfileStore(context: Context) {
         const val KEY_ALIAS = "graphite-wireguard-profiles-v1"
         const val SELECTED = "selected_uuid"
         const val EXT = ".gwp"
-        const val MAX_PROFILES = 20
+        const val MAX_PROFILES = 200
     }
 }

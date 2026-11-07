@@ -1,6 +1,8 @@
-# GRAPHITE VPN 0.3.1-alpha1
+# GRAPHITE VPN 0.3.5-alpha1
 
-Android-клиент на Kotlin и экспериментальный Graphite Tunnel.
+Android-клиент на Kotlin с подписками на серверы. Graphite Tunnel и Self-hosted временно отключены в приложении; сохранённые экспериментальные профили не удаляются.
+
+Инструкция, поддерживаемые форматы и ограничения подписок: [SUBSCRIPTIONS.md](SUBSCRIPTIONS.md).
 
 - `app/` — Android-клиент.
 - `graphite-server/` — сервер Graphite Tunnel для ПК или VPS на Python, с инструкцией запуска.
@@ -8,4 +10,4 @@ Android-клиент на Kotlin и экспериментальный Graphite 
 
 Для сборки Android нужны JDK 17, Android SDK 35 и Gradle Wrapper. Готовые нативные библиотеки JNI находятся в полном архиве исходников GRAPHITE VPN 0.3.1, переданном вместе с APK. Скопируйте каталоги `awg-tunnel/src/main/jniLibs` и `xray-tunnel/src/main/jniLibs` из архива с сохранением путей. Для сборки APK с подписью обновления используйте свой закрытый ключ по инструкции в [SIGNING.md](SIGNING.md).
 
-Graphite Tunnel использует TLS 1.3 для шифрования. Формат аутентификации и кадров экспериментальный.
+Серверная лаборатория Graphite Tunnel использует TLS 1.3. В текущий APK лабораторный сервер и SSH-установщик не включаются.

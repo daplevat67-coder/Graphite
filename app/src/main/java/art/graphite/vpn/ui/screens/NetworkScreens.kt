@@ -117,6 +117,7 @@ private val Protocol.statusRes: Int get() = when(id) {
             TearableSheet(tearingId==p.id,animate,onGone={}) {
                 SketchCard {
                     Text(p.name,style=MaterialTheme.typography.titleMedium)
+                    p.subscriptionName?.let { Text(stringResource(R.string.subscription_origin,it),style=MaterialTheme.typography.labelMedium) }
                     Text(if(selectedId==p.id)stringResource(R.string.profile_protocol_selected,p.protocolName) else p.protocolName,style=MaterialTheme.typography.labelMedium)
                     Text(p.endpoints.joinToString(" · "),style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.onSurfaceVariant)
                     ServerProbeCard(probeResults[p.id],p.id in probingIds,probeTimes[p.id],p.endpoints.size>1,drawLoading=drawLoading){onProbe(p.id)}

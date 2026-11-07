@@ -52,7 +52,7 @@
     <string name="advanced_error_config">Не удалось проверить конфигурацию. Проверьте ключи, адреса, параметры интерфейса и всех пиров.</string>
     <string name="advanced_error_name">Введите название от 1 до 80 символов без переносов строк.</string>
     <string name="advanced_error_size">Конфигурация слишком большая. Максимум — 64 КиБ.</string>
-    <string name="advanced_error_limit">Можно сохранить до 20 профилей.</string>
+    <string name="advanced_error_limit">Можно сохранить до 200 профилей.</string>
     <string name="advanced_error_storage">Не удалось открыть или сохранить профиль. Изменения не подтверждены.</string>
     <string name="advanced_error_key">Не удалось создать ключ. Повторите попытку.</string>
     <string name="advanced_error_address">Укажите адрес интерфейса IPv4 или IPv6.</string>

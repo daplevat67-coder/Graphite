@@ -12,15 +12,20 @@ import kotlin.coroutines.coroutineContext
 
 /** Used only after the user confirms a decoded HTTPS address. No background subscription updates. */
 object HttpsConfigFetcher {
-    internal fun valid(uri:URI)=uri.scheme.equals("https",true) && !uri.host.isNullOrBlank() && uri.rawUserInfo==null && (uri.port==-1 || uri.port in 1..65535)
+    internal fun valid(uri:URI)=uri.scheme.equals("https",true) && !uri.host.isNullOrBlank() && uri.rawUserInfo==null && uri.rawFragment==null && (uri.port==-1 || uri.port in 1..65535)
     internal fun sameOrigin(a:URI,b:URI)=a.host.equals(b.host,true) && (if(a.port==-1)443 else a.port)==(if(b.port==-1)443 else b.port) && valid(b)
     suspend fun fetch(uri:URI):String=withContext(Dispatchers.IO) {
         require(valid(uri)){"INVALID_HTTPS"}
+        val deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(25)
+        fun budget(): Int {
+            val left = java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(deadline - System.nanoTime())
+            require(left > 0) { "FETCH_TIMEOUT" }; return left.coerceAtMost(10000).toInt().coerceAtLeast(1)
+        }
         var current=uri
         repeat(4) {attempt->
             coroutineContext.ensureActive()
             val connection=current.toURL().openConnection() as HttpsURLConnection
-            connection.instanceFollowRedirects=false;connection.connectTimeout=5000;connection.readTimeout=10000
+            connection.instanceFollowRedirects=false;connection.connectTimeout=minOf(5000,budget());connection.readTimeout=budget()
             connection.setRequestProperty("Accept-Encoding","identity")
             try {
                 val code=connection.responseCode
@@ -34,7 +39,7 @@ object HttpsConfigFetcher {
                     val bytes=connection.inputStream.use {input->
                         val out=ByteArrayOutputStream();val buffer=ByteArray(8192)
                         try {
-                            while(true){coroutineContext.ensureActive();val n=input.read(buffer);if(n<0)break;require(out.size()+n<=262144){"RESPONSE_TOO_LARGE"};out.write(buffer,0,n)}
+                            while(true){coroutineContext.ensureActive();connection.readTimeout=budget();val n=input.read(buffer);if(n<0)break;require(out.size()+n<=262144){"RESPONSE_TOO_LARGE"};out.write(buffer,0,n)}
                             out.toByteArray()
                         }finally{buffer.fill(0)}
                     }

@@ -14,11 +14,10 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28])
 class GraphiteProtocolTest {
-    @Test fun importsAndRoundTripsSecretWithoutExposingIt() {
+    @Test fun disabledImportRetainsOldDocumentCompatibility() {
         val link = "graphite://${"A".repeat(43)}@vpn.example:8443"
-        val payload = ImportPayloadDecoder.decode(link) as ConfigPayload
-        assertEquals(ImportFormat.GRAPHITE,payload.format)
-        val doc = ProfileDocuments.parse(payload.config)
+        assertTrue(ImportPayloadDecoder.decode(link) is Unsupported)
+        val doc = ProfileDocuments.parse(link.toByteArray())
         val profile = requireNotNull(doc.graphite)
         assertEquals("vpn.example:8443",profile.endpoint)
         assertEquals(link,doc.bytes().decodeToString())

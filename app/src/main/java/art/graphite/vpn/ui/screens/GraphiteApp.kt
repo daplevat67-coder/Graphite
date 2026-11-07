@@ -174,11 +174,15 @@ import art.graphite.vpn.ui.theme.GraphiteTheme
         refreshing=true
         try {
             val result=withContext(Dispatchers.IO) {store.inspect() to runCatching {store.selected()}.getOrNull()}
-            profiles=result.first.profiles;unreadable=result.first.unreadableIds;selected=result.second
+            profiles=result.first.profiles.filter { it.protocolId != "graphite" };unreadable=result.first.unreadableIds;selected=result.second?.takeIf { it.protocolId != "graphite" }
             if(unreadable.isNotEmpty())notice=R.string.corrupt_notice
         }catch(_:Exception){notice=R.string.storage_error}finally{refreshing=false;refreshEpoch++}
     }
     LaunchedEffect(Unit){reload()}
+    // Re-entering a server list also observes a refresh committed while leaving the subscription screen.
+    LaunchedEffect(tab,detail) {
+        if ((tab==Destination.SERVERS && detail==null) || protocols.any { it.id==detail }) reload()
+    }
     LaunchedEffect(tab){if(tab==Destination.PING)tab=Destination.SERVERS}
     fun pingServer(id:String) {
         if(probing[id]==true)return
@@ -217,7 +221,7 @@ import art.graphite.vpn.ui.theme.GraphiteTheme
         }
     }
     fun navigate(destination:Destination) {leaveEditor {direction=if(destination.ordinal>=tab.ordinal)1 else -1;editorOpen=false;profilesOpen=false;detail=null;returnToProtocol=null;tab=destination;if(tactile)haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)}}
-    fun back() {leaveEditor {direction=-1;when {editorOpen->editorOpen=false;profilesOpen->profilesOpen=false;detail=="self-hosted"->detail="import";detail!=null->{detail=returnToProtocol;returnToProtocol=null};else->tab=Destination.HOME}}}
+    fun back() {leaveEditor {direction=-1;when {editorOpen->editorOpen=false;profilesOpen->profilesOpen=false;detail!=null->{detail=returnToProtocol;returnToProtocol=null};else->tab=Destination.HOME}}}
     BackHandler(editorOpen || profilesOpen || detail!=null || tab!=Destination.HOME){back()}
     LaunchedEffect(incomingImport,locked,busy,editorOpen) {
         if(incomingImport!=null) {
@@ -409,7 +413,7 @@ import art.graphite.vpn.ui.theme.GraphiteTheme
         val colors=MaterialTheme.colorScheme
         Surface(color=colors.background) {
             Column(Modifier.fillMaxSize().paper(colors.onSurface,colors.background).windowInsetsPadding(WindowInsets.safeDrawing)) {
-                val heading=when {editorOpen->R.string.advanced_mode;profilesOpen->R.string.profiles;detail=="tunneling"->R.string.tunneling_screen;detail=="import"->R.string.connection_create;detail=="self-hosted"->R.string.selfhost_title;detail?.startsWith("server:")==true->R.string.server_details;detail!=null->R.string.protocol;tab==Destination.HOME->R.string.vpn_title;else->tab.label}
+                val heading=when {editorOpen->R.string.advanced_mode;profilesOpen->R.string.profiles;detail=="tunneling"->R.string.tunneling_screen;detail=="import"->R.string.connection_create;detail=="subscriptions"->R.string.subscriptions_title;detail?.startsWith("server:")==true->R.string.server_details;detail!=null->R.string.protocol;tab==Destination.HOME->R.string.vpn_title;else->tab.label}
                 Row(Modifier.fillMaxWidth().padding(horizontal=20.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
                     if(editorOpen || profilesOpen || detail!=null)IconAction("back",R.string.back){back()}else SketchIcon(if(tab==Destination.HOME)"shield" else tab.icon,Modifier.size(30.dp))
                     Text(stringResource(heading),Modifier.weight(1f),style=MaterialTheme.typography.titleLarge)
@@ -485,47 +489,7 @@ import art.graphite.vpn.ui.theme.GraphiteTheme
                                 onDetails={profilesOpen=false;returnToProtocol=protocolId;if(protocolId==null)tab=Destination.SERVERS;detail="server:$it";direction=1},activeProfileId=tunnel.profileId,tunnelPhase=tunnel.phase,alwaysOn=tunnel.alwaysOn==true,drawLoading=drawing && animate,protocol=pageProtocol)
                             }
                             page=="detail/tunneling"->TunnelPreferences(tunnelOptions,onSave={tunnelOptionsStore.save(it);tunnelOptions=it})
-                            page=="detail/self-hosted"->SelfHostedScreen { profile ->
-                                if (detail == "self-hosted") {
-                                    val saved = if (busy) false else {
-                                        busy = true
-                                        val raw = profile.toByteArray(Charsets.UTF_8)
-                                        try {
-                                            withContext(Dispatchers.IO) {
-                                                val host = requireNotNull(java.net.URI(profile).host)
-                                                val alreadySaved = store.inspect().profiles
-                                                    .filter { it.protocolId == "graphite" }
-                                                    .any { runCatching { store.graphiteProfile(it.id).link == profile }.getOrDefault(false) }
-                                                if (!alreadySaved) {
-                                                    store.`import`(host.take(80), raw, selectNewProfile(), "graphite")
-                                                }
-                                            }
-                                            reload()
-                                            true
-                                        } catch (cancelled: CancellationException) {
-                                            throw cancelled
-                                        } catch (_: Exception) {
-                                            false
-                                        } finally {
-                                            raw.fill(0)
-                                            busy = false
-                                        }
-                                    }
-                                    if (detail == "self-hosted") {
-                                        direction = -1
-                                        if (saved) {
-                                            returnToProtocol = null
-                                            detail = "graphite"
-                                            notice = R.string.connection_saved
-                                        } else {
-                                            importSeed = profile
-                                            importSession++
-                                            returnToProtocol = "graphite"
-                                            detail = "import"
-                                        }
-                                    }
-                                }
-                            }
+                            page=="detail/subscriptions"->SubscriptionsScreen(store, locked, initialUrl=importSeed.orEmpty(), onChanged={ reload() })
                             page=="detail/import"->key(importSession) {
                                 val protocolId=returnToProtocol
                                 ProfileImportScreen(importSeed,onSeedConsumed={importSeed=null},
@@ -539,9 +503,7 @@ import art.graphite.vpn.ui.theme.GraphiteTheme
                                     onVless=if(protocolId==null || protocolId=="vless") {
                                         {openEditor(null,"vless")}
                                     } else null,
-                                    onSelfHosted=if(protocolId==null || protocolId=="graphite") {
-                                        {detail="self-hosted";direction=1}
-                                    } else null,
+                                    onSubscription={ link -> importSeed=link;detail="subscriptions";direction=1 },
                                     onImport={name,raw->
                                         if(busy)false else {
                                             busy=true
@@ -617,8 +579,8 @@ import art.graphite.vpn.ui.theme.GraphiteTheme
                                     }
                                     SketchRow("settings",stringResource(R.string.advanced_profiles),stringResource(R.string.advanced_hint)){navigate(Destination.SERVERS)}
                                 }
+                                    SketchRow("link",stringResource(R.string.subscriptions_title),stringResource(R.string.subscriptions_hint)){importSeed=null;detail="subscriptions";direction=1}
                                 SketchRow("pulse",stringResource(R.string.server_checks),stringResource(R.string.server_checks_hint)){navigate(Destination.SERVERS)}
-                                SketchRow("layers",stringResource(R.string.custom_protocol),stringResource(R.string.graphite_experimental)){detail="graphite";direction=1}
                                 SketchRow("info",stringResource(R.string.about),stringResource(R.string.version)){about=true}
                             }
                         }

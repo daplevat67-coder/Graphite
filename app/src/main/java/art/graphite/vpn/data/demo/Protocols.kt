@@ -11,6 +11,5 @@ val protocols = listOf(
     Protocol("vmess","VMess",R.string.vmess_desc,"vmess://…","layers"),
     Protocol("mtproto","MTProto Proxy",R.string.mt_desc,"tg://proxy?…","link"),
     Protocol("socks5","SOCKS5",R.string.socks_desc,"socks5://…","server"),
-    Protocol("graphite","Graphite Tunnel",R.string.graphite_description,"graphite://…","layers"),
     Protocol("other","Другие",R.string.others_desc,"—","menu")
 )
