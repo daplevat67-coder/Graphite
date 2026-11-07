@@ -14,26 +14,23 @@ import java.util.Base64
 import java.util.concurrent.TimeUnit
 
 internal class SelfHostedDeploy {
-    class Failure(val reason: Reason) : IOException(reason.name)
+    class Failure(val reason: Reason, val observedFingerprint: String? = null) : IOException(reason.name)
     enum class Reason { INVALID_INPUT, HOST_KEY, SSH, INSTALL, TIMEOUT }
     class Request(
-        val host: String, val sshPort: String, val domain: String, val vpnPort: String,
-        val fingerprint: String, val certPath: String, val keyPath: String,
+        val host: String, val sshPort: String, val vpnPort: String,
+        val fingerprint: String?,
         val secret: String, val privateKey: Boolean, val passphrase: String = "",
     )
 
     // Called on an interruptible IO worker. Only the validated profile leaves this function.
-    fun install(request: Request, server: ByteArray, installer: ByteArray): String {
-        val host = request.host.trim().removePrefix("[").removeSuffix("]")
-        val domain = request.domain.trim()
+    fun install(request: Request, server: ByteArray, installer: ByteArray, quickInstaller: ByteArray): String {
+        val host = request.host.trim()
         val sshPort = request.sshPort.toIntOrNull()
         val vpnPort = request.vpnPort.toIntOrNull()
-        val fingerprint = request.fingerprint.trim()
-        if (!host.matches(Regex("[A-Za-z0-9][A-Za-z0-9.:-]*|::[0-9A-Fa-f:]+")) ||
-            !domain.matches(Regex("[A-Za-z0-9][A-Za-z0-9.-]*")) ||
+        val fingerprint = request.fingerprint
+        if (!host.matches(Regex("[A-Za-z0-9][A-Za-z0-9.-]{0,252}")) ||
             sshPort == null || sshPort !in 1..65535 || vpnPort == null || vpnPort !in 1024..65535 ||
-            !fingerprint.matches(Regex("SHA256:[A-Za-z0-9+/]{43}")) ||
-            !request.certPath.matches(safePath) || !request.keyPath.matches(safePath) ||
+            (fingerprint != null && !fingerprint.matches(Regex("SHA256:[A-Za-z0-9+/]{43}"))) ||
             request.secret.isBlank()
         ) throw Failure(Reason.INVALID_INPUT)
 
@@ -53,9 +50,11 @@ internal class SelfHostedDeploy {
             val channel = session.openChannel("exec") as ChannelExec
             try {
                 val payload = "GRAPHITE_SERVER_B64='${Base64.getEncoder().encodeToString(server)}'\n"
-                    .toByteArray(Charsets.US_ASCII) + installer
+                    .toByteArray(Charsets.US_ASCII) +
+                    "GRAPHITE_INSTALLER_B64='${Base64.getEncoder().encodeToString(installer)}'\n"
+                        .toByteArray(Charsets.US_ASCII) + quickInstaller
                 val output = channel.inputStream
-                channel.setCommand("bash -s -- '$domain' '${request.certPath}' '${request.keyPath}' '$vpnPort'")
+                channel.setCommand("bash -s -- '$host' '$vpnPort'")
                 channel.setInputStream(ByteArrayInputStream(payload))
                 channel.connect(8_000)
                 val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(90)
@@ -78,7 +77,7 @@ internal class SelfHostedDeploy {
                 } catch (_: Exception) {
                     throw Failure(Reason.INSTALL)
                 }
-                if (!profile.host.equals(domain, ignoreCase = true) || profile.port != vpnPort) {
+                if (!profile.host.equals(host, ignoreCase = true) || profile.port != vpnPort || profile.certificatePin == null) {
                     throw Failure(Reason.INSTALL)
                 }
                 return profile.link
@@ -86,7 +85,9 @@ internal class SelfHostedDeploy {
                 channel.disconnect()
             }
         } catch (_: JSchException) {
-            throw Failure(if (pinned.mismatch) Reason.HOST_KEY else Reason.SSH)
+            val observed = pinned.rejectedFingerprint
+            if (observed != null) throw Failure(Reason.HOST_KEY, observed)
+            throw Failure(Reason.SSH)
         } catch (failure: Failure) {
             throw failure
         } catch (_: IOException) {
@@ -99,14 +100,15 @@ internal class SelfHostedDeploy {
         }
     }
 
-    private class PinnedHostKey(private val expected: String) : HostKeyRepository {
-        @Volatile var mismatch = false
+    private class PinnedHostKey(private val expected: String?) : HostKeyRepository {
+        @Volatile var rejectedFingerprint: String? = null
             private set
         override fun check(host: String, key: ByteArray): Int {
             val digest = MessageDigest.getInstance("SHA-256").digest(key)
             val actual = "SHA256:" + Base64.getEncoder().withoutPadding().encodeToString(digest)
-            mismatch = actual != expected
-            return if (mismatch) HostKeyRepository.CHANGED else HostKeyRepository.OK
+            if (actual == expected) return HostKeyRepository.OK
+            rejectedFingerprint = actual
+            return HostKeyRepository.CHANGED
         }
         override fun add(hostkey: HostKey, ui: UserInfo?) = Unit
         override fun remove(host: String?, type: String?) = Unit
@@ -116,7 +118,4 @@ internal class SelfHostedDeploy {
         override fun getHostKey(host: String?, type: String?): Array<HostKey> = emptyArray()
     }
 
-    private companion object {
-        val safePath = Regex("/[A-Za-z0-9_./-]+")
-    }
 }

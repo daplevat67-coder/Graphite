@@ -487,11 +487,43 @@ import art.graphite.vpn.ui.theme.GraphiteTheme
                             page=="detail/tunneling"->TunnelPreferences(tunnelOptions,onSave={tunnelOptionsStore.save(it);tunnelOptions=it})
                             page=="detail/self-hosted"->SelfHostedScreen { profile ->
                                 if (detail == "self-hosted") {
-                                    importSeed = profile
-                                    importSession++
-                                    returnToProtocol = "graphite"
-                                    detail = "import"
-                                    direction = -1
+                                    val saved = if (busy) false else {
+                                        busy = true
+                                        val raw = profile.toByteArray(Charsets.UTF_8)
+                                        try {
+                                            withContext(Dispatchers.IO) {
+                                                val host = requireNotNull(java.net.URI(profile).host)
+                                                val alreadySaved = store.inspect().profiles
+                                                    .filter { it.protocolId == "graphite" }
+                                                    .any { runCatching { store.graphiteProfile(it.id).link == profile }.getOrDefault(false) }
+                                                if (!alreadySaved) {
+                                                    store.`import`(host.take(80), raw, selectNewProfile(), "graphite")
+                                                }
+                                            }
+                                            reload()
+                                            true
+                                        } catch (cancelled: CancellationException) {
+                                            throw cancelled
+                                        } catch (_: Exception) {
+                                            false
+                                        } finally {
+                                            raw.fill(0)
+                                            busy = false
+                                        }
+                                    }
+                                    if (detail == "self-hosted") {
+                                        direction = -1
+                                        if (saved) {
+                                            returnToProtocol = null
+                                            detail = "graphite"
+                                            notice = R.string.connection_saved
+                                        } else {
+                                            importSeed = profile
+                                            importSession++
+                                            returnToProtocol = "graphite"
+                                            detail = "import"
+                                        }
+                                    }
                                 }
                             }
                             page=="detail/import"->key(importSession) {

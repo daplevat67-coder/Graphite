@@ -31,8 +31,8 @@ android {
         applicationId = "art.graphite.vpn"
         minSdk = 26
         targetSdk = 35
-        versionCode = 19
-        versionName = "0.3.3-alpha1"
+        versionCode = 20
+        versionName = "0.3.4-alpha1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs.getByName("debug") {

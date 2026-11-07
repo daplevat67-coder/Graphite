@@ -1,23 +1,22 @@
 <resources>
     <string name="selfhost_title">Свой сервер · Self-hosted</string>
-    <string name="selfhost_help">Graphite Tunnel на твоём VPS. Нужны Linux с systemd, Python 3.11+, доступ root по SSH, домен и готовый TLS-сертификат. Разреши входящий TCP-порт в настройках VPS.</string>
-    <string name="selfhost_host">IP или адрес SSH-сервера</string>
+    <string name="selfhost_help">Установи Graphite Tunnel на свой VPS по SSH. Сертификат будет создан на сервере. Нужны systemd, Python 3.11+, OpenSSL и доступ root.</string>
+    <string name="selfhost_host">IPv4 или имя VPS</string>
     <string name="selfhost_ssh_port">Порт SSH</string>
-    <string name="selfhost_domain">Домен из TLS-сертификата</string>
     <string name="selfhost_vpn_port">Порт Graphite Tunnel</string>
     <string name="selfhost_fingerprint">Отпечаток SSH-хоста SHA256</string>
-    <string name="selfhost_fingerprint_hint">Сверь ключ ECDSA P-256 через доверенную консоль VPS. Команда: ssh-keygen -lf /etc/ssh/ssh_host_ecdsa_key.pub -E sha256</string>
-    <string name="selfhost_certificate">Путь к fullchain.pem на VPS</string>
-    <string name="selfhost_certificate_key">Путь к privkey.pem на VPS</string>
+    <string name="selfhost_fingerprint_hint">Сверь отпечаток с доверенной консолью провайдера. В консоли VPS: ssh-keygen -lf /etc/ssh/ssh_host_ecdsa_key.pub -E sha256</string>
     <string name="selfhost_use_key">Использовать приватный SSH-ключ</string>
     <string name="selfhost_ssh_private_key">Приватный SSH-ключ</string>
     <string name="selfhost_password">Пароль root</string>
     <string name="selfhost_passphrase">Пароль ключа, если есть</string>
     <string name="selfhost_install">Установить Graphite Tunnel</string>
     <string name="selfhost_installing">Подключение по SSH и проверка сервера…</string>
-    <string name="selfhost_invalid">Проверь адрес, порты, отпечаток и абсолютные пути к сертификату.</string>
+    <string name="selfhost_invalid">Проверь адрес VPS, порты и данные входа.</string>
     <string name="selfhost_bad_fingerprint">Отпечаток SSH-хоста не совпал. Сверь его через консоль провайдера.</string>
     <string name="selfhost_ssh_failed">Не удалось войти по SSH. Проверь порт, доступ root, ключ хоста ECDSA P-256 и данные входа.</string>
-    <string name="selfhost_install_failed">VPS не подтвердил установку. Проверь сертификат, свободный порт и журнал graphite-tunnel.service.</string>
+    <string name="selfhost_install_failed">VPS не подтвердил установку. Проверь OpenSSL, свободный порт и журнал graphite-tunnel.service.</string>
     <string name="selfhost_timeout">Время ожидания установки истекло. Проверь сервис на VPS перед повтором.</string>
+    <string name="selfhost_ports">Настройки портов</string>
+    <string name="selfhost_confirm_key">Отпечаток совпадает</string>
 </resources>

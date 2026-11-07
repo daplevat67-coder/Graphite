@@ -14,7 +14,7 @@ import art.graphite.vpn.vpn.*
 import art.graphite.vpn.vpn.graphite.GraphiteBridge
 import art.graphite.vpn.domain.xray.XrayConfigGenerator
 import java.net.InetSocketAddress
-import javax.net.ssl.SSLSocketFactory
+import art.graphite.vpn.domain.graphite.GraphiteTls
 import art.graphite.xray.XrayTunnelEngine
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
@@ -63,7 +63,7 @@ class XrayVpnService:VpnService(){
    val addresses=network.getAllByName(peer.host).distinct().map { InetSocketAddress(it,peer.port) }
    val token=peer.token()
    val bridge=try {
-    GraphiteBridge(SSLSocketFactory.getDefault() as SSLSocketFactory,
+    GraphiteBridge(GraphiteTls.socketFactory(peer.certificatePin),
         addresses,peer.host,token) { socket ->
      protect(socket) && runCatching { network.bindSocket(socket); true }.getOrDefault(false)
     }
